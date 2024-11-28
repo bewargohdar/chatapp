@@ -8,7 +8,19 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   var _isLogin = true;
+
+  void _submit() {
+    final isValid = _formKey.currentState!.validate();
+
+    if (isValid) {
+      _formKey.currentState!.save();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,24 +42,38 @@ class _AuthScreenState extends State<AuthScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Form(
+                      key: _formKey,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           TextFormField(
+                            controller: _emailController,
                             decoration:
                                 const InputDecoration(labelText: 'Email'),
                             keyboardType: TextInputType.emailAddress,
                             autocorrect: false,
                             textCapitalization: TextCapitalization.none,
+                            validator: (value) =>
+                                value!.trim().isEmpty || !value.contains('@')
+                                    ? 'Please enter a valid email address.'
+                                    : null,
+                            onSaved: (value) => _emailController.text = value!,
                           ),
                           TextFormField(
+                            controller: _passwordController,
                             decoration:
                                 const InputDecoration(labelText: 'Password'),
                             obscureText: true,
+                            validator: (value) => value!.isEmpty ||
+                                    value.trim().length < 6
+                                ? 'Password must be at least 6 characters long.'
+                                : null,
+                            onSaved: (value) =>
+                                _passwordController.text = value!,
                           ),
                           const SizedBox(height: 12),
                           ElevatedButton(
-                            onPressed: () {},
+                            onPressed: _submit,
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: Theme.of(context)
                                     .colorScheme
