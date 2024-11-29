@@ -16,14 +16,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   void _onSignUp(AuthRegister event, Emitter<AuthState> emit) async {
-    emit(AuthLoading());
-    final result = await _singup(SignupParams(event.email, event.password));
-    emit(AuthSuccess(result));
+    try {
+      final result = await _singup(SignupParams(event.email, event.password));
+      emit(AuthSuccess(result));
+    } catch (e) {
+      emit(AuthFailure('Singup failed'));
+    }
   }
 
   void _onLogin(AuthLogin event, Emitter<AuthState> emit) async {
-    emit(AuthLoading());
-    final result = await _login(LoginParams(event.email, event.password));
-    emit(AuthSuccess(result));
+    try {
+      final result = await _login(LoginParams(event.email, event.password));
+      emit(AuthSuccess(result));
+    } catch (e) {
+      emit(AuthFailure('Login failed'));
+    }
   }
 }

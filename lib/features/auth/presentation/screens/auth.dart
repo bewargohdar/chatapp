@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-final _auth = FirebaseAuth.instance;
+import '../bloc/auth_bloc.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -15,6 +15,14 @@ class _AuthScreenState extends State<AuthScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   var _isLogin = true;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   void _showMessage(String message, {Color? backgroundColor}) {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -31,21 +39,18 @@ class _AuthScreenState extends State<AuthScreen> {
     if (isValid) {
       _formKey.currentState!.save();
     }
+
+    print("Email: ${_emailController.text}");
+    print("Password: ${_passwordController.text}");
+
     if (_isLogin) {
-      try {
-        await _auth.signInWithEmailAndPassword(
-            email: _emailController.text, password: _passwordController.text);
-      } on FirebaseAuthException catch (e) {
-        _showMessage(e.message ?? 'Authentication failed');
-      }
+      context
+          .read<AuthBloc>()
+          .add(AuthLogin(_emailController.text, _passwordController.text));
     } else {
-      try {
-        await _auth.createUserWithEmailAndPassword(
-            email: _emailController.text, password: _passwordController.text);
-      } on FirebaseAuthException catch (e) {
-        _showMessage(e.message ?? 'Authentication failed',
-            backgroundColor: Theme.of(context).colorScheme.error);
-      }
+      context
+          .read<AuthBloc>()
+          .add(AuthRegister(_emailController.text, _passwordController.text));
     }
   }
 
@@ -53,20 +58,27 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.primary,
-      body: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                margin: const EdgeInsets.only(
-                    bottom: 20, right: 20, left: 20, top: 30),
-                width: 200,
-                child: Image.asset('assets/images/chat.png'),
-              ),
-              Card(
-                margin: const EdgeInsets.all(20),
-                child: SingleChildScrollView(
+      body: BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthFailure) {
+            _showMessage(state.message, backgroundColor: Colors.red);
+          } else if (state is AuthSuccess) {
+            _showMessage('Success', backgroundColor: Colors.green);
+          }
+        },
+        child: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(
+                      bottom: 20, right: 20, left: 20, top: 30),
+                  width: 200,
+                  child: Image.asset('assets/images/chat.png'),
+                ),
+                Card(
+                  margin: const EdgeInsets.all(20),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Form(
@@ -125,8 +137,8 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
