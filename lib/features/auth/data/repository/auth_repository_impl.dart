@@ -1,20 +1,36 @@
-import 'package:chatapp/features/auth/data/models/user.dart';
 import 'package:chatapp/features/auth/domain/repository/auth_repository.dart';
-
+import '../../../../core/res/data_state.dart';
+import '../../domain/entity/user.dart';
 import '../datasource/auth_remote_data_source.dart';
 
-class AuthRepositoryImpl extends AuthRepository {
+class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
 
   AuthRepositoryImpl(this.remoteDataSource);
 
   @override
-  Future<UserModel> login(String email, String password) {
-    return remoteDataSource.login(email, password);
+  Future<DataState<UserEntity>> login(String email, String password) async {
+    final result = await remoteDataSource.login(email, password);
+    if (result is DataSuccess) {
+      return DataSuccess(
+        UserEntity(id: result.data!.id, email: result.data!.email),
+      );
+    } else if (result is DataError) {
+      return DataError(result.error!);
+    }
+    return DataError(Exception('Unexpected error'));
   }
 
   @override
-  Future<UserModel> signup(String email, String password) {
-    return remoteDataSource.signup(email, password);
+  Future<DataState<UserEntity>> signup(String email, String password) async {
+    final result = await remoteDataSource.signup(email, password);
+    if (result is DataSuccess) {
+      return DataSuccess(
+        UserEntity(id: result.data!.id, email: result.data!.email),
+      );
+    } else if (result is DataError) {
+      return DataError(result.error!);
+    }
+    return DataError(Exception('Unexpected error'));
   }
 }
