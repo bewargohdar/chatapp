@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+final _auth = FirebaseAuth.instance;
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -13,11 +16,32 @@ class _AuthScreenState extends State<AuthScreen> {
   final _passwordController = TextEditingController();
   var _isLogin = true;
 
-  void _submit() {
+  void _submit() async {
     final isValid = _formKey.currentState!.validate();
 
     if (isValid) {
       _formKey.currentState!.save();
+    }
+    if (_isLogin) {
+    } else {
+      try {
+        final userCredetials = await _auth.createUserWithEmailAndPassword(
+            email: _emailController.text, password: _passwordController.text);
+        print(userCredetials.user!.email);
+        if (!mounted) return;
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'email-already-in-use') {
+          print('The account already exists for that email.');
+        }
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message ?? 'Authentication failed'),
+            backgroundColor:
+                Theme.of(context).colorScheme.error.withOpacity(0.5),
+          ),
+        );
+      }
     }
   }
 
