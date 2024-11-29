@@ -15,6 +15,15 @@ class _AuthScreenState extends State<AuthScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   var _isLogin = true;
+  void _showMessage(String message, {Color? backgroundColor}) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: backgroundColor ?? Theme.of(context).colorScheme.error,
+      ),
+    );
+  }
 
   void _submit() async {
     final isValid = _formKey.currentState!.validate();
@@ -23,6 +32,13 @@ class _AuthScreenState extends State<AuthScreen> {
       _formKey.currentState!.save();
     }
     if (_isLogin) {
+      try {
+        final userCredentials = await _auth.signInWithEmailAndPassword(
+            email: _emailController.text, password: _passwordController.text);
+        print(userCredentials);
+      } on FirebaseAuthException catch (e) {
+        _showMessage(e.message ?? 'Authentication failed');
+      }
     } else {
       try {
         final userCredetials = await _auth.createUserWithEmailAndPassword(
@@ -33,14 +49,8 @@ class _AuthScreenState extends State<AuthScreen> {
         if (e.code == 'email-already-in-use') {
           print('The account already exists for that email.');
         }
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message ?? 'Authentication failed'),
-            backgroundColor:
-                Theme.of(context).colorScheme.error.withOpacity(0.5),
-          ),
-        );
+        _showMessage(e.message ?? 'Authentication failed',
+            backgroundColor: Theme.of(context).colorScheme.error);
       }
     }
   }
