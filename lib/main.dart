@@ -1,5 +1,5 @@
 import 'package:chatapp/firebase_options.dart';
-import 'package:chatapp/screens/auth.dart';
+import 'package:chatapp/features/auth/presentation/screens/auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 

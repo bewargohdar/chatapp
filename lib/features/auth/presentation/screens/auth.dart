@@ -33,22 +33,16 @@ class _AuthScreenState extends State<AuthScreen> {
     }
     if (_isLogin) {
       try {
-        final userCredentials = await _auth.signInWithEmailAndPassword(
+        await _auth.signInWithEmailAndPassword(
             email: _emailController.text, password: _passwordController.text);
-        print(userCredentials);
       } on FirebaseAuthException catch (e) {
         _showMessage(e.message ?? 'Authentication failed');
       }
     } else {
       try {
-        final userCredetials = await _auth.createUserWithEmailAndPassword(
+        await _auth.createUserWithEmailAndPassword(
             email: _emailController.text, password: _passwordController.text);
-        print(userCredetials.user!.email);
-        if (!mounted) return;
       } on FirebaseAuthException catch (e) {
-        if (e.code == 'email-already-in-use') {
-          print('The account already exists for that email.');
-        }
         _showMessage(e.message ?? 'Authentication failed',
             backgroundColor: Theme.of(context).colorScheme.error);
       }
