@@ -1,4 +1,5 @@
-import 'package:chatapp/core/helper/app_bar.dart';
+import 'package:chatapp/core/helper/widget/user_image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -88,6 +89,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            if (!_isLogin) const UserImagePicker(),
                             TextFormField(
                               controller: _emailController,
                               decoration: InputDecoration(
