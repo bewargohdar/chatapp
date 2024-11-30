@@ -1,7 +1,10 @@
 import 'package:chatapp/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:chatapp/features/chat/presentation/screens/chat.dart';
+import 'package:chatapp/features/splash.dart';
 import 'package:chatapp/firebase_options.dart';
 import 'package:chatapp/features/auth/presentation/screens/auth.dart';
 import 'package:chatapp/server_injection.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -33,7 +36,18 @@ class MyApp extends StatelessWidget {
             secondary: Colors.deepPurpleAccent,
           ),
         ),
-        home: const AuthScreen(),
+        home: StreamBuilder(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SplashScreen();
+              }
+              if (snapshot.hasData) {
+                return const ChatScreen();
+              } else {
+                return const AuthScreen();
+              }
+            }),
       ),
     );
   }
