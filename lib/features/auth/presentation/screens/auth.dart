@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:chatapp/core/helper/widget/user_image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../bloc/auth_bloc.dart';
 
@@ -18,6 +22,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _passwordController = TextEditingController();
   bool _isLogin = true;
   bool _isPasswordVisible = false;
+  XFile? _selectedImage;
 
   @override
   void dispose() {
@@ -37,21 +42,44 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  void _submit() {
-    FocusScope.of(context).unfocus(); // Dismiss keyboard
+  Future<void> _submit() async {
+    FocusScope.of(context).unfocus();
 
-    if (!_formKey.currentState!.validate()) {
+    if (!_formKey.currentState!.validate() ||
+        (!_isLogin && _selectedImage == null)) {
+      _showMessage('Please complete the form.');
       return;
     }
 
     _formKey.currentState!.save();
 
-    if (_isLogin) {
-      context.read<AuthBloc>().add(AuthLogin(
-          _emailController.text.trim(), _passwordController.text.trim()));
-    } else {
-      context.read<AuthBloc>().add(AuthRegister(
-          _emailController.text.trim(), _passwordController.text.trim()));
+    try {
+      if (_isLogin) {
+        context.read<AuthBloc>().add(AuthLogin(
+              _emailController.text.trim(),
+              _passwordController.text.trim(),
+            ));
+      } else {
+        context.read<AuthBloc>().add(AuthRegister(
+              _emailController.text.trim(),
+              _passwordController.text.trim(),
+            ));
+
+        final user = FirebaseAuth.instance.currentUser;
+        if (user == null) return;
+
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child('user_images')
+            .child('${user.uid}.jpg');
+
+        await storageRef.putFile(File(_selectedImage!.path));
+      }
+    } catch (e) {
+      _showMessage(
+        'An error occurred: ${e.toString()}',
+        backgroundColor: Colors.red,
+      );
     }
   }
 
@@ -89,7 +117,12 @@ class _AuthScreenState extends State<AuthScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (!_isLogin) const UserImagePicker(),
+                            if (!_isLogin)
+                              UserImagePicker(
+                                onImagePicked: (pickedImage) {
+                                  _selectedImage = pickedImage;
+                                },
+                              ),
                             TextFormField(
                               controller: _emailController,
                               decoration: InputDecoration(
