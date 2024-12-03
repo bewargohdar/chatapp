@@ -1,4 +1,6 @@
+import 'package:chatapp/features/chat/presentation/widget/message_bubble.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class ChatMessages extends StatelessWidget {
@@ -6,6 +8,7 @@ class ChatMessages extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authenticatedUser = FirebaseAuth.instance.currentUser!;
     return StreamBuilder(
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -25,16 +28,44 @@ class ChatMessages extends StatelessWidget {
           );
         }
         return ListView.builder(
+          reverse: true,
+          padding:
+              const EdgeInsets.only(top: 15, bottom: 15, left: 15, right: 15),
           itemBuilder: (context, index) {
-            final chatData = snapshot.data!.docs[index];
-            return Text(chatData['text']);
+            final chatData = snapshot.data!.docs[index].data();
+            final nextChatMessage = snapshot.data!.docs.length > index + 1
+                ? snapshot.data!.docs[index + 1].data()
+                : null;
+
+            final currentMessageUserId = chatData['userId'];
+            final nextMessageUserId =
+                nextChatMessage != null ? nextChatMessage['userId'] : null;
+
+            // Check if this is the first message or from a different user
+            final isFirstMessage = nextMessageUserId == null ||
+                currentMessageUserId != nextMessageUserId;
+
+            // Render different widgets based on whether it's the first message
+            if (isFirstMessage) {
+              return MessageBubble.first(
+                userImage: chatData['image_url'] ?? '',
+                username: chatData['username'] ?? 'Unknown User',
+                message: chatData['text'] ?? '',
+                isMe: authenticatedUser.uid == currentMessageUserId,
+              );
+            } else {
+              return MessageBubble.next(
+                message: chatData['text'] ?? '',
+                isMe: authenticatedUser.uid == currentMessageUserId,
+              );
+            }
           },
           itemCount: snapshot.data!.docs.length,
         );
       },
       stream: FirebaseFirestore.instance
           .collection('chat')
-          .orderBy('createdAt', descending: false)
+          .orderBy('createdAt', descending: true)
           .snapshots(),
     );
   }
