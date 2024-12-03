@@ -1,7 +1,9 @@
 import 'dart:io';
 
 import 'package:chatapp/core/helper/widget/user_image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,6 +21,7 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLogin = true;
   bool _isPasswordVisible = false;
@@ -65,15 +68,27 @@ class _AuthScreenState extends State<AuthScreen> {
               _passwordController.text.trim(),
             ));
 
+        // Wait for the authentication process to complete
+        await Future.delayed(const Duration(seconds: 2)); // Adjust as needed
         final user = FirebaseAuth.instance.currentUser;
-        if (user == null) return;
+        if (user == null) {
+          throw Exception("No authenticated user found after sign-up.");
+        }
 
         final storageRef = FirebaseStorage.instance
             .ref()
             .child('user_images')
             .child('${user.uid}.jpg');
 
-        await storageRef.putFile(File(_selectedImage!.path));
+        final uploadTask = await storageRef.putFile(File(_selectedImage!.path));
+        final imageUrl = await uploadTask.ref.getDownloadURL();
+
+        await user.updatePhotoURL(imageUrl);
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'username': _usernameController.text.trim(),
+          'email': user.email,
+          'image_url': imageUrl,
+        }, SetOptions(merge: true));
       }
     } catch (e) {
       _showMessage(
@@ -150,9 +165,30 @@ class _AuthScreenState extends State<AuthScreen> {
                                 }
                                 return null;
                               },
-                              onChanged: (value) => setState(() {}),
+                              onChanged: (value) => setState(() {
+                                _emailController.text = value.trim();
+                              }),
                             ),
                             const SizedBox(height: 10),
+                            if (!_isLogin)
+                              TextFormField(
+                                decoration: const InputDecoration(
+                                  labelText: 'Username',
+                                  prefixIcon: Icon(Icons.person),
+                                ),
+                                enableSuggestions: false,
+                                validator: (value) {
+                                  if (value == null ||
+                                      value.trim().isEmpty ||
+                                      value.trim().length < 4) {
+                                    return 'Please enter a valid username (at least 4 characters).';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (newValue) => setState(() {
+                                  _usernameController.text = newValue!;
+                                }),
+                              ),
                             TextFormField(
                               controller: _passwordController,
                               decoration: InputDecoration(
@@ -221,4 +257,20 @@ class _AuthScreenState extends State<AuthScreen> {
       ),
     );
   }
+}
+
+//testing firestore
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  final user = FirebaseAuth.instance.currentUser;
+
+  await FirebaseFirestore.instance.collection('users').doc(user?.uid).set({
+    'username': 'testUser',
+    'email': 'test@example.com',
+  });
+
+  final userData =
+      await FirebaseFirestore.instance.collection('users').doc(user?.uid).get();
+  print(userData.data());
 }

@@ -42,6 +42,7 @@ dependencies:
   flutter_bloc: ^8.1.6
   firebase_storage: ^12.3.6
   image_picker: ^1.1.2
+  cloud_firestore: ^5.5.0
  
 
 dev_dependencies:
