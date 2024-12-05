@@ -2,6 +2,7 @@ import 'package:bloc/bloc.dart';
 import 'package:chatapp/features/auth/domain/entity/user.dart';
 import 'package:chatapp/features/auth/domain/usecase/login.dart';
 import 'package:chatapp/features/auth/domain/usecase/singup.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:meta/meta.dart';
 
 import '../../../../core/res/data_state.dart';
@@ -20,7 +21,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   void _onSignUp(AuthRegister event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
-    final result = await _singup(SignupParams(event.email, event.password));
+    final result = await _singup(
+        SignupParams(event.email, event.password, event.username, event.image));
     if (result is DataSuccess) {
       emit(AuthSuccess(result.data!));
     } else if (result is DataError) {

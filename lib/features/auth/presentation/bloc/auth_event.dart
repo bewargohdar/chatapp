@@ -13,8 +13,10 @@ final class AuthLogin extends AuthEvent {
 final class AuthRegister extends AuthEvent {
   final String email;
   final String password;
+  final String username;
+  final XFile image;
 
-  AuthRegister(this.email, this.password);
+  AuthRegister(this.email, this.password, this.username, this.image);
 }
 
 final class AuthLogout extends AuthEvent {}

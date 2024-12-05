@@ -1,4 +1,5 @@
 import 'package:chatapp/features/auth/domain/repository/auth_repository.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/res/data_state.dart';
 import '../../domain/entity/user.dart';
 import '../datasource/auth_remote_data_source.dart';
@@ -13,8 +14,7 @@ class AuthRepositoryImpl implements AuthRepository {
     final result = await remoteDataSource.login(email, password);
     if (result is DataSuccess) {
       return DataSuccess(
-        UserEntity(id: result.data!.id, email: result.data!.email),
-      );
+          UserEntity(id: result.data!.id, email: result.data!.email));
     } else if (result is DataError) {
       return DataError(result.error!);
     }
@@ -22,12 +22,21 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<DataState<UserEntity>> signup(String email, String password) async {
-    final result = await remoteDataSource.signup(email, password);
+  Future<DataState<UserEntity>> signup(
+    String email,
+    String password,
+    String username,
+    XFile image,
+  ) async {
+    final result = await remoteDataSource.signup(
+      email,
+      password,
+      username,
+      image,
+    );
     if (result is DataSuccess) {
       return DataSuccess(
-        UserEntity(id: result.data!.id, email: result.data!.email),
-      );
+          UserEntity(id: result.data!.id, email: result.data!.email));
     } else if (result is DataError) {
       return DataError(result.error!);
     }

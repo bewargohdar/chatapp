@@ -1,15 +1,9 @@
-import 'dart:io';
-
-import 'package:chatapp/core/helper/widget/user_image_picker.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../bloc/auth_bloc.dart';
+import '../widget/auth_card.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -24,14 +18,48 @@ class _AuthScreenState extends State<AuthScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLogin = true;
-  bool _isPasswordVisible = false;
   XFile? _selectedImage;
 
   @override
   void dispose() {
     _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _submit() {
+    FocusScope.of(context).unfocus();
+
+    if (!_formKey.currentState!.validate() ||
+        (!_isLogin && _selectedImage == null)) {
+      _showMessage('Please complete the form.');
+      return;
+    }
+
+    _formKey.currentState!.save();
+
+    if (_isLogin) {
+      _loginUser();
+    } else {
+      _registerUser();
+    }
+  }
+
+  void _loginUser() {
+    context.read<AuthBloc>().add(AuthLogin(
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
+        ));
+  }
+
+  Future<void> _registerUser() async {
+    context.read<AuthBloc>().add(AuthRegister(
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
+          _usernameController.text.trim(),
+          _selectedImage!,
+        ));
   }
 
   void _showMessage(String message, {Color? backgroundColor}) {
@@ -45,57 +73,10 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Future<void> _submit() async {
-    FocusScope.of(context).unfocus();
-
-    if (!_formKey.currentState!.validate() ||
-        (!_isLogin && _selectedImage == null)) {
-      _showMessage('Please complete the form.');
-      return;
-    }
-
-    _formKey.currentState!.save();
-
-    try {
-      if (_isLogin) {
-        context.read<AuthBloc>().add(AuthLogin(
-              _emailController.text.trim(),
-              _passwordController.text.trim(),
-            ));
-      } else {
-        context.read<AuthBloc>().add(AuthRegister(
-              _emailController.text.trim(),
-              _passwordController.text.trim(),
-            ));
-
-        // Wait for the authentication process to complete
-        await Future.delayed(const Duration(seconds: 2)); // Adjust as needed
-        final user = FirebaseAuth.instance.currentUser;
-        if (user == null) {
-          throw Exception("No authenticated user found after sign-up.");
-        }
-
-        final storageRef = FirebaseStorage.instance
-            .ref()
-            .child('user_images')
-            .child('${user.uid}.jpg');
-
-        final uploadTask = await storageRef.putFile(File(_selectedImage!.path));
-        final imageUrl = await uploadTask.ref.getDownloadURL();
-
-        await user.updatePhotoURL(imageUrl);
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-          'username': _usernameController.text.trim(),
-          'email': user.email,
-          'image_url': imageUrl,
-        }, SetOptions(merge: true));
-      }
-    } catch (e) {
-      _showMessage(
-        'An error occurred: ${e.toString()}',
-        backgroundColor: Colors.red,
-      );
-    }
+  void _toggleAuthMode() {
+    setState(() {
+      _isLogin = !_isLogin;
+    });
   }
 
   @override
@@ -117,137 +98,17 @@ class _AuthScreenState extends State<AuthScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    margin: const EdgeInsets.only(
-                        bottom: 20, right: 20, left: 20, top: 30),
-                    width: 200,
-                    child: Image.asset('assets/images/chat.png'),
-                  ),
-                  Card(
-                    margin: const EdgeInsets.all(20),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (!_isLogin)
-                              UserImagePicker(
-                                onImagePicked: (pickedImage) {
-                                  _selectedImage = pickedImage;
-                                },
-                              ),
-                            TextFormField(
-                              controller: _emailController,
-                              decoration: InputDecoration(
-                                labelText: 'Email',
-                                prefixIcon: const Icon(Icons.email),
-                                suffixIcon: _emailController.text.isNotEmpty
-                                    ? IconButton(
-                                        icon: const Icon(Icons.clear),
-                                        onPressed: () =>
-                                            _emailController.clear(),
-                                      )
-                                    : null,
-                              ),
-                              keyboardType: TextInputType.emailAddress,
-                              autocorrect: false,
-                              textCapitalization: TextCapitalization.none,
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Please enter an email address.';
-                                }
-                                final emailRegex = RegExp(
-                                    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
-                                if (!emailRegex.hasMatch(value.trim())) {
-                                  return 'Please enter a valid email address.';
-                                }
-                                return null;
-                              },
-                              onChanged: (value) => setState(() {
-                                _emailController.text = value.trim();
-                              }),
-                            ),
-                            const SizedBox(height: 10),
-                            if (!_isLogin)
-                              TextFormField(
-                                decoration: const InputDecoration(
-                                  labelText: 'Username',
-                                  prefixIcon: Icon(Icons.person),
-                                ),
-                                enableSuggestions: false,
-                                validator: (value) {
-                                  if (value == null ||
-                                      value.trim().isEmpty ||
-                                      value.trim().length < 4) {
-                                    return 'Please enter a valid username (at least 4 characters).';
-                                  }
-                                  return null;
-                                },
-                                onSaved: (newValue) => setState(() {
-                                  _usernameController.text = newValue!;
-                                }),
-                              ),
-                            TextFormField(
-                              controller: _passwordController,
-                              decoration: InputDecoration(
-                                labelText: 'Password',
-                                prefixIcon: const Icon(Icons.lock),
-                                suffixIcon: IconButton(
-                                  icon: Icon(_isPasswordVisible
-                                      ? Icons.visibility
-                                      : Icons.visibility_off),
-                                  onPressed: () {
-                                    setState(() {
-                                      _isPasswordVisible = !_isPasswordVisible;
-                                    });
-                                  },
-                                ),
-                              ),
-                              obscureText: !_isPasswordVisible,
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Please enter a password.';
-                                }
-                                if (value.trim().length < 6) {
-                                  return 'Password must be at least 6 characters long.';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 20),
-                            if (state is AuthLoading)
-                              const CircularProgressIndicator(),
-                            if (state is! AuthLoading)
-                              ElevatedButton(
-                                onPressed: _submit,
-                                style: ElevatedButton.styleFrom(
-                                  minimumSize: const Size(double.infinity, 50),
-                                  backgroundColor: Theme.of(context)
-                                      .colorScheme
-                                      .primaryContainer,
-                                  foregroundColor:
-                                      Theme.of(context).colorScheme.primary,
-                                ),
-                                child: Text(_isLogin ? 'Login' : 'Signup'),
-                              ),
-                            TextButton(
-                              onPressed: state is! AuthLoading
-                                  ? () {
-                                      setState(() {
-                                        _isLogin = !_isLogin;
-                                      });
-                                    }
-                                  : null,
-                              child: Text(_isLogin
-                                  ? 'Create new account'
-                                  : 'I already have an account'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  _LogoSection(),
+                  AuthCard(
+                    isLogin: _isLogin,
+                    formKey: _formKey,
+                    emailController: _emailController,
+                    usernameController: _usernameController,
+                    passwordController: _passwordController,
+                    onImagePicked: (image) => _selectedImage = image,
+                    onSubmit: _submit,
+                    onToggleAuthMode: _toggleAuthMode,
+                    isLoading: state is AuthLoading,
                   ),
                 ],
               ),
@@ -259,18 +120,13 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 }
 
-//testing firestore
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  final user = FirebaseAuth.instance.currentUser;
-
-  await FirebaseFirestore.instance.collection('users').doc(user?.uid).set({
-    'username': 'testUser',
-    'email': 'test@example.com',
-  });
-
-  final userData =
-      await FirebaseFirestore.instance.collection('users').doc(user?.uid).get();
-  print(userData.data());
+class _LogoSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20, right: 20, left: 20, top: 30),
+      width: 200,
+      child: Image.asset('assets/images/chat.png'),
+    );
+  }
 }
