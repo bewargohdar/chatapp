@@ -18,11 +18,7 @@ class ChatDataSourceImpl implements ChatDataSource {
       final snapshot =
           await _firestore.collection('chat').orderBy('createdAt').get();
 
-      print(
-          'Fetched snapshot: ${snapshot.docs.length} messages'); // Print number of messages
-
       final messages = snapshot.docs.map((doc) {
-        print('Document data: ${doc.data()}'); // Print each document's data
         return MessageModel.fromFirebase(doc.data());
       }).toList();
 

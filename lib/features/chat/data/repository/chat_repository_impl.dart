@@ -14,7 +14,7 @@ class ChatRepositoryImpl extends ChatRepository {
   }
 
   @override
-  Future<DataState> sendMessage(MessageModel message) {
+  Future<DataState<void>> sendMessage(MessageModel message) {
     return _dataSource.sendMessage(message);
   }
 }
