@@ -40,9 +40,11 @@ class _NewMessagesState extends State<NewMessages> {
       final user = FirebaseAuth.instance.currentUser;
 
       if (user == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please log in to send messages')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please log in to send messages')),
+          );
+        }
         return;
       }
 
@@ -52,14 +54,19 @@ class _NewMessagesState extends State<NewMessages> {
           .get();
 
       if (!userData.exists || userData.data() == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User data not found')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('User data not found')),
+          );
+        }
         return;
       }
-      final username = userData.data()?['username'] ??
-          'Anonymous'; // Provide default value if null
-      final imageUrl = userData.data()?['image_url'] ?? '';
+
+      final username =
+          userData.data()?['username'] ?? 'Anonymous'; // Default value if null
+      final imageUrl =
+          userData.data()?['image_url'] ?? ''; // Default empty string if null
+
       // Create MessageModel and send it through the BLoC
       final message = MessageModel(
         userId: user.uid,
@@ -68,19 +75,24 @@ class _NewMessagesState extends State<NewMessages> {
         imageUrl: imageUrl,
         createdAt: DateTime.now(),
       );
-
-      context.read<ChatBloc>().add(SendMessageEvent(message));
+      if (mounted) {
+        context.read<ChatBloc>().add(SendMessageEvent(message));
+      }
 
       // Clear input after sending message
       _messageController.clear();
     } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send message: $error')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send message: $error')),
+        );
+      }
     } finally {
-      setState(() {
-        _isSending = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+        });
+      }
     }
   }
 

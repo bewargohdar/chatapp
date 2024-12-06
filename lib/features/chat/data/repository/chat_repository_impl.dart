@@ -9,7 +9,7 @@ class ChatRepositoryImpl extends ChatRepository {
 
   ChatRepositoryImpl(this._dataSource);
   @override
-  Future<DataState<List<MessageModel>>> getMessages() {
+  Stream<DataState<List<MessageModel>>> getMessages() {
     return _dataSource.fetchMessages();
   }
 

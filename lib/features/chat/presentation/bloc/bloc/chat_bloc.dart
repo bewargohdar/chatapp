@@ -19,12 +19,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   Future<void> _onFetchMessages(
       FetchMessagesEvent event, Emitter<ChatState> emit) async {
     emit(ChatLoadingState());
-    final dataState = await getMessagesUsecase(null);
-
-    if (dataState is DataSuccess) {
-      emit(ChatMessagesFetchedState(dataState.data ?? []));
-    } else if (dataState is DataError) {
-      emit(ChatErrorState(dataState.error?.toString() ?? 'Unknown error'));
+    await for (final dataState in getMessagesUsecase(null)) {
+      if (dataState is DataSuccess) {
+        emit(ChatMessagesFetchedState(dataState.data ?? []));
+      } else if (dataState is DataError) {
+        emit(ChatErrorState(dataState.error?.toString() ?? 'Unknown error'));
+      }
     }
   }
 

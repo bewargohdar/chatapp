@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:chatapp/core/res/data_state.dart';
 
 abstract class ChatDataSource {
-  Future<DataState<List<MessageModel>>> fetchMessages();
+  Stream<DataState<List<MessageModel>>> fetchMessages();
   Future<DataState<void>> sendMessage(MessageModel message);
 }
 
@@ -11,26 +11,26 @@ class ChatDataSourceImpl implements ChatDataSource {
   final FirebaseFirestore _firestore;
 
   ChatDataSourceImpl(this._firestore);
-
   @override
-  Future<DataState<List<MessageModel>>> fetchMessages() async {
+  Stream<DataState<List<MessageModel>>> fetchMessages() {
     try {
-      final snapshot = await _firestore
+      return _firestore
           .collection('chat')
           .orderBy('createdAt', descending: true)
-          .get();
+          .snapshots()
+          .map((snapshot) {
+        final messages = snapshot.docs.map((doc) {
+          return MessageModel.fromFirebase(doc.data());
+        }).toList();
 
-      final messages = snapshot.docs.map((doc) {
-        return MessageModel.fromFirebase(doc.data());
-      }).toList();
+        if (messages.isEmpty) {
+          return DataError(Exception('No messages found'));
+        }
 
-      if (messages.isEmpty) {
-        return DataError(Exception('No messages found'));
-      }
-
-      return DataSuccess(messages);
+        return DataSuccess(messages);
+      });
     } catch (e) {
-      return DataError(Exception('Failed to fetch messages: $e'));
+      return Stream.value(DataError(Exception('Failed to fetch messages: $e')));
     }
   }
 
