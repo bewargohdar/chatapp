@@ -1,8 +1,8 @@
 import 'package:chatapp/features/chat/domain/entity/message.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MessageModel extends MessageEntity {
   MessageModel({
-    required super.id,
     required super.userId,
     required super.text,
     required super.username,
@@ -12,23 +12,21 @@ class MessageModel extends MessageEntity {
 
   factory MessageModel.fromFirebase(Map<String, dynamic> json) {
     return MessageModel(
-      id: json['id'],
-      userId: json['senderId'],
-      text: json['message'],
-      username: json['username'],
-      imageUrl: json['imageUrl'],
-      createdAt: json['timestamp'].toDate(),
+      userId: json['userId'] ?? '',
+      text: json['text'] ?? '',
+      username: json['username'] ?? '',
+      imageUrl: json['imageUrl'] ?? '',
+      createdAt: (json['createdAt'] as Timestamp).toDate(),
     );
   }
 
   Map<String, dynamic> toFirebase() {
     return {
-      'id': super.id,
-      'senderId': super.userId,
-      'message': super.text,
+      'userId': super.userId,
+      'text': super.text,
       'username': super.username,
       'imageUrl': super.imageUrl,
-      'timestamp': super.createdAt,
+      'createdAt': super.createdAt,
     };
   }
 }
