@@ -1,5 +1,6 @@
 import 'package:chatapp/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_bloc.dart';
+import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_event.dart';
 import 'package:chatapp/features/chat/presentation/screens/chat.dart';
 import 'package:chatapp/features/splash.dart';
 import 'package:chatapp/firebase_options.dart';
@@ -31,7 +32,7 @@ class MyApp extends StatelessWidget {
           create: (context) => sl<AuthBloc>(),
         ),
         BlocProvider(
-          create: (context) => sl<ChatBloc>(),
+          create: (context) => sl<ChatBloc>()..add(FetchMessagesEvent()),
         ),
       ],
       child: MaterialApp(

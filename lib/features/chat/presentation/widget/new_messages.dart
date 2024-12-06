@@ -1,6 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_bloc.dart';
+import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_event.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:chatapp/features/chat/data/models/message.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class NewMessages extends StatefulWidget {
   const NewMessages({super.key});
@@ -26,19 +30,15 @@ class _NewMessagesState extends State<NewMessages> {
       return;
     }
 
-    // Prevent multiple simultaneous submissions
-    if (_isSending) return;
+    if (_isSending) return; // Prevent multiple submissions
+
+    setState(() {
+      _isSending = true;
+    });
 
     try {
-      setState(() {
-        _isSending = true;
-      });
-
-      // Hide keyboard
-      FocusScope.of(context).unfocus();
-
-      // Validate user authentication
       final user = FirebaseAuth.instance.currentUser;
+
       if (user == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please log in to send messages')),
@@ -46,38 +46,38 @@ class _NewMessagesState extends State<NewMessages> {
         return;
       }
 
-      // Fetch user data
       final userData = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .get();
 
-      // Validate user data
       if (!userData.exists || userData.data() == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('User data not found')),
         );
         return;
       }
+      final username = userData.data()?['username'] ??
+          'Anonymous'; // Provide default value if null
+      final imageUrl = userData.data()?['image_url'] ?? '';
+      // Create MessageModel and send it through the BLoC
+      final message = MessageModel(
+        userId: user.uid,
+        text: enteredMessage,
+        username: username,
+        imageUrl: imageUrl,
+        createdAt: DateTime.now(),
+      );
 
-      // Send message to Firestore
-      await FirebaseFirestore.instance.collection('chat').add({
-        'text': enteredMessage,
-        'createdAt': Timestamp.now(),
-        'userId': user.uid,
-        'username': userData.data()!['username'],
-        'image_url': userData.data()!['image_url'],
-      });
+      context.read<ChatBloc>().add(SendMessageEvent(message));
 
-      // Clear input after successful send
+      // Clear input after sending message
       _messageController.clear();
     } catch (error) {
-      // Handle potential errors
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to send message: $error')),
       );
     } finally {
-      // Reset sending state
       setState(() {
         _isSending = false;
       });
@@ -106,15 +106,12 @@ class _NewMessagesState extends State<NewMessages> {
                       )
                     : null,
               ),
-              enabled: !_isSending,
             ),
           ),
           IconButton(
-            color: _isSending
-                ? Colors.grey
-                : Theme.of(context).colorScheme.secondary,
             icon: const Icon(Icons.send),
-            onPressed: _isSending ? null : _sendMessage,
+            onPressed: _sendMessage,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ],
       ),

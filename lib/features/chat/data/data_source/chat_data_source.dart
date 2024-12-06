@@ -15,8 +15,10 @@ class ChatDataSourceImpl implements ChatDataSource {
   @override
   Future<DataState<List<MessageModel>>> fetchMessages() async {
     try {
-      final snapshot =
-          await _firestore.collection('chat').orderBy('createdAt').get();
+      final snapshot = await _firestore
+          .collection('chat')
+          .orderBy('createdAt', descending: true)
+          .get();
 
       final messages = snapshot.docs.map((doc) {
         return MessageModel.fromFirebase(doc.data());
