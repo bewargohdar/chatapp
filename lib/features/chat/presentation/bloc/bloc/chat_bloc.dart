@@ -8,9 +8,9 @@ import 'chat_state.dart';
 
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final GetMessageUsecase getMessagesUsecase;
-  final SendMessageUseCase sendMessageUsecase;
+  final SendMessageUseCase sendMessageUseCase;
 
-  ChatBloc(this.getMessagesUsecase, this.sendMessageUsecase)
+  ChatBloc(this.getMessagesUsecase, this.sendMessageUseCase)
       : super(ChatInitialState()) {
     on<FetchMessagesEvent>(_onFetchMessages);
     on<SendMessageEvent>(_onSendMessage);
@@ -30,12 +30,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   Future<void> _onSendMessage(
       SendMessageEvent event, Emitter<ChatState> emit) async {
-    final dataState = await sendMessageUsecase(event.message);
+    final dataState = await sendMessageUseCase(event.message);
 
-    if (dataState is DataSuccess) {
-      // Immediately fetch updated messages after sending
-      add(FetchMessagesEvent());
-    } else if (dataState is DataError) {
+    if (dataState is DataError) {
       emit(
           ChatErrorState(dataState.error?.toString() ?? 'Send message failed'));
     }

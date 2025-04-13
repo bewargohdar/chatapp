@@ -32,6 +32,8 @@ void init() {
       () => AuthRemoteDataSourceImpl());
   sl.registerLazySingleton<ChatDataSource>(
       () => ChatDataSourceImpl(sl<FirebaseFirestore>()));
+
+  // Using Lazy singleton for Firestore to defer initialization until needed
   sl.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
 
   //bloc

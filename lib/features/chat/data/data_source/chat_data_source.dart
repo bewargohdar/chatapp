@@ -17,16 +17,14 @@ class ChatDataSourceImpl implements ChatDataSource {
       return _firestore
           .collection('chat')
           .orderBy('createdAt', descending: true)
+          .limit(50) // Limit to the most recent 50 messages
           .snapshots()
           .map((snapshot) {
         final messages = snapshot.docs.map((doc) {
           return MessageModel.fromFirebase(doc.data());
         }).toList();
 
-        if (messages.isEmpty) {
-          return DataError(Exception('No messages found'));
-        }
-
+        // Return empty list instead of error for no messages
         return DataSuccess(messages);
       });
     } catch (e) {

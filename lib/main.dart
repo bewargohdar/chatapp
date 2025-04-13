@@ -52,6 +52,7 @@ class MyApp extends StatelessWidget {
                 return const SplashScreen();
               }
               if (snapshot.hasData) {
+                BlocProvider.of<ChatBloc>(context);
                 return const ChatScreen();
               } else {
                 return const AuthScreen();
