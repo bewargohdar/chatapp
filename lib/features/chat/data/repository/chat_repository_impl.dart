@@ -9,8 +9,8 @@ class ChatRepositoryImpl extends ChatRepository {
 
   ChatRepositoryImpl(this._dataSource);
   @override
-  Stream<DataState<List<MessageModel>>> getMessages() {
-    return _dataSource.fetchMessages();
+  Stream<DataState<List<MessageModel>>> getMessages(String? recipientId) {
+    return _dataSource.fetchMessages(recipientId);
   }
 
   @override

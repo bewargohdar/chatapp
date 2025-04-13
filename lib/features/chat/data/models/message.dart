@@ -8,6 +8,7 @@ class MessageModel extends MessageEntity {
     required super.username,
     required super.imageUrl,
     required super.createdAt,
+    super.recipientId,
   });
 
   factory MessageModel.fromFirebase(Map<String, dynamic> json) {
@@ -17,6 +18,7 @@ class MessageModel extends MessageEntity {
       username: json['username'] ?? '',
       imageUrl: json['imageUrl'] ?? '',
       createdAt: (json['createdAt'] as Timestamp).toDate(),
+      recipientId: json['recipientId'],
     );
   }
 
@@ -27,6 +29,7 @@ class MessageModel extends MessageEntity {
       'username': super.username,
       'imageUrl': super.imageUrl,
       'createdAt': super.createdAt,
+      'recipientId': super.recipientId,
     };
   }
 }

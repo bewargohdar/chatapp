@@ -19,7 +19,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   Future<void> _onFetchMessages(
       FetchMessagesEvent event, Emitter<ChatState> emit) async {
     emit(ChatLoadingState());
-    await for (final dataState in getMessagesUsecase(null)) {
+    await for (final dataState in getMessagesUsecase(event.selectedUser?.id)) {
       if (dataState is DataSuccess) {
         emit(ChatMessagesFetchedState(dataState.data ?? []));
       } else if (dataState is DataError) {

@@ -1,3 +1,4 @@
+import 'package:chatapp/features/auth/domain/entity/user.dart';
 import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_bloc.dart';
 import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_event.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +8,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class NewMessages extends StatefulWidget {
-  const NewMessages({super.key});
+  final UserEntity? selectedUser;
+
+  const NewMessages({
+    super.key,
+    this.selectedUser,
+  });
 
   @override
   State<NewMessages> createState() => _NewMessagesState();
@@ -74,7 +80,10 @@ class _NewMessagesState extends State<NewMessages> {
         username: username,
         imageUrl: imageUrl,
         createdAt: DateTime.now(),
+        recipientId:
+            widget.selectedUser?.id, // Add recipient ID if selected user exists
       );
+
       if (mounted) {
         context.read<ChatBloc>().add(SendMessageEvent(message));
       }
@@ -109,7 +118,9 @@ class _NewMessagesState extends State<NewMessages> {
               autocorrect: true,
               enableSuggestions: true,
               decoration: InputDecoration(
-                labelText: 'Send a message...',
+                labelText: widget.selectedUser != null
+                    ? 'Message to ${widget.selectedUser!.username ?? widget.selectedUser!.email}'
+                    : 'Send a message...',
                 suffixIcon: _isSending
                     ? const SizedBox(
                         width: 20,

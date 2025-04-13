@@ -4,6 +4,7 @@ class MessageEntity {
   final String username;
   final String imageUrl;
   final DateTime createdAt;
+  final String? recipientId;
 
   MessageEntity({
     required this.text,
@@ -11,5 +12,6 @@ class MessageEntity {
     required this.username,
     required this.imageUrl,
     required this.createdAt,
+    this.recipientId,
   });
 }

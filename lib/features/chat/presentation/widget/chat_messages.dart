@@ -1,17 +1,31 @@
 import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_bloc.dart';
+import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_event.dart';
 import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:chatapp/features/chat/domain/entity/message.dart';
+import 'package:chatapp/features/auth/domain/entity/user.dart';
 
 import 'package:chatapp/features/chat/presentation/widget/message_bubble.dart';
 
 class ChatMessages extends StatelessWidget {
-  const ChatMessages({super.key});
+  final UserEntity? selectedUser;
+
+  const ChatMessages({
+    super.key,
+    this.selectedUser,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // Initialize the chat by fetching messages with the selected user
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context
+          .read<ChatBloc>()
+          .add(FetchMessagesEvent(selectedUser: selectedUser));
+    });
+
     return BlocBuilder<ChatBloc, ChatState>(
       builder: (context, state) {
         if (state is ChatLoadingState) {

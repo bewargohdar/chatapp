@@ -1,9 +1,10 @@
 import 'package:chatapp/features/chat/data/models/message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:chatapp/core/res/data_state.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 abstract class ChatDataSource {
-  Stream<DataState<List<MessageModel>>> fetchMessages();
+  Stream<DataState<List<MessageModel>>> fetchMessages(String? recipientId);
   Future<DataState<void>> sendMessage(MessageModel message);
 }
 
@@ -12,19 +13,34 @@ class ChatDataSourceImpl implements ChatDataSource {
 
   ChatDataSourceImpl(this._firestore);
   @override
-  Stream<DataState<List<MessageModel>>> fetchMessages() {
+  Stream<DataState<List<MessageModel>>> fetchMessages(String? recipientId) {
     try {
-      return _firestore
+      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+      if (currentUserId == null) {
+        return Stream.value(DataError(Exception('User not authenticated')));
+      }
+
+      // Simple query for all messages, sorted by creation time
+      var query = _firestore
           .collection('chat')
           .orderBy('createdAt', descending: true)
-          .limit(50) // Limit to the most recent 50 messages
-          .snapshots()
-          .map((snapshot) {
+          .limit(50);
+
+      // If a specific conversation is requested, we'll filter in memory after fetching
+      return query.snapshots().map((snapshot) {
         final messages = snapshot.docs.map((doc) {
-          return MessageModel.fromFirebase(doc.data());
+          return MessageModel.fromFirebase(doc.data() as Map<String, dynamic>);
         }).toList();
 
-        // Return empty list instead of error for no messages
+        // If recipientId is provided, filter messages in memory
+        if (recipientId != null) {
+          messages.removeWhere((message) =>
+              !((message.userId == currentUserId &&
+                      message.recipientId == recipientId) ||
+                  (message.userId == recipientId &&
+                      message.recipientId == currentUserId)));
+        }
+
         return DataSuccess(messages);
       });
     } catch (e) {

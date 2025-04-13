@@ -1,0 +1,2 @@
+/Users/bewar/Desktop/chatapp/android/app/.cxx/Debug/y6o5k2p5/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/bewar/Desktop/chatapp/android/app/.cxx/Debug/y6o5k2p5/armeabi-v7a/CMakeFiles/rebuild_cache.dir
