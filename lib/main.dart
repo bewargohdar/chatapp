@@ -1,6 +1,7 @@
 import 'package:chatapp/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_bloc.dart';
 import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_event.dart';
+import 'package:chatapp/features/home/presentation/bloc/home_bloc.dart';
 import 'package:chatapp/features/home/presentation/screens/home_screen.dart';
 import 'package:chatapp/features/splash.dart';
 import 'package:chatapp/firebase_options.dart';
@@ -33,6 +34,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => sl<ChatBloc>()..add(FetchMessagesEvent()),
+        ),
+        BlocProvider(
+          create: (context) => sl<HomeBloc>(),
         ),
       ],
       child: MaterialApp(
