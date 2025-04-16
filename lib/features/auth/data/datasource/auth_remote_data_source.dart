@@ -62,12 +62,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       await _firestore.collection('users').doc(userId).set({
         'username': username,
         'email': email,
-        'image_url': imageUrl,
+        'image': imageUrl,
       });
 
       return DataSuccess(UserModel(id: userId, email: email));
     } on FirebaseAuthException catch (e) {
       return DataError(e);
+    } catch (e) {
+      // Add generic error handling to catch any other exceptions
+      return DataError(Exception('Registration failed: $e'));
     }
   }
 }
