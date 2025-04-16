@@ -58,6 +58,8 @@ class ChatMessages extends StatelessWidget {
                 username: message.username,
                 message: message.text,
                 isMe: isMe,
+                voiceUrl: message.voiceUrl,
+                messageType: message.messageType,
               );
             },
           );
