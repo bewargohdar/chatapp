@@ -27,7 +27,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>We need access to your camera to capture an image.</string>
+	<string>We need access to your camera for profile pictures</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need access to your microphone to record voice messages</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need access to your photo library to select an image.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
