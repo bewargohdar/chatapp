@@ -1,13 +1,16 @@
 import 'dart:io';
 import 'package:chatapp/features/auth/domain/entity/user.dart';
-import 'package:chatapp/features/chat/data/services/user_message_service.dart';
 import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_bloc.dart';
 import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_event.dart';
 import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:chatapp/features/chat/data/models/message.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:get_it/get_it.dart';
+import 'package:chatapp/features/chat/domain/entity/message.dart';
 
 class NewMessages extends StatefulWidget {
   final UserEntity? selectedUser;
@@ -25,8 +28,6 @@ class _NewMessagesState extends State<NewMessages> {
   final _messageController = TextEditingController();
   bool _isSending = false;
   final ImagePicker _picker = ImagePicker();
-  final UserMessageService _userMessageService =
-      GetIt.instance<UserMessageService>();
 
   @override
   void dispose() {
@@ -63,10 +64,45 @@ class _NewMessagesState extends State<NewMessages> {
     });
 
     try {
-      // Create and send text message through the service
-      final message = await _userMessageService.createTextMessage(
-        enteredMessage,
-        widget.selectedUser?.id,
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please log in to send messages')),
+          );
+        }
+        return;
+      }
+
+      final userData = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (!userData.exists || userData.data() == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('User data not found')),
+          );
+        }
+        return;
+      }
+
+      final username =
+          userData.data()?['username'] ?? 'Anonymous'; // Default value if null
+      final imageUrl =
+          userData.data()?['image'] ?? ''; // Default empty string if null
+
+      // Create MessageModel and send it through the BLoC
+      final message = MessageModel(
+        userId: user.uid,
+        text: enteredMessage,
+        username: username,
+        imageUrl: imageUrl,
+        createdAt: DateTime.now(),
+        recipientId:
+            widget.selectedUser?.id, // Add recipient ID if selected user exists
       );
 
       if (mounted) {
@@ -106,10 +142,52 @@ class _NewMessagesState extends State<NewMessages> {
     });
 
     try {
-      // Create and send image message through the service
-      final message = await _userMessageService.createImageMessage(
-        image,
-        widget.selectedUser?.id,
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please log in to send messages')),
+          );
+        }
+        return;
+      }
+
+      final userData = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (!userData.exists || userData.data() == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('User data not found')),
+          );
+        }
+        return;
+      }
+
+      final username = userData.data()?['username'] ?? 'Anonymous';
+      final imageUrl = userData.data()?['image'] ?? '';
+
+      // Upload image file to Firebase Storage
+      final fileName = 'image_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final storageRef =
+          FirebaseStorage.instance.ref().child('chat_images').child(fileName);
+
+      final File file = File(image.path);
+      final uploadTask = await storageRef.putFile(file);
+      final String imageDownloadUrl = await uploadTask.ref.getDownloadURL();
+
+      // Create MessageModel and send it through the BLoC
+      final message = MessageModel(
+        userId: user.uid,
+        text: '', // No text for image message
+        username: username,
+        imageUrl: imageDownloadUrl,
+        createdAt: DateTime.now(),
+        recipientId: widget.selectedUser?.id,
+        messageType: MessageType.image,
       );
 
       if (mounted) {

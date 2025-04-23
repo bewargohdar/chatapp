@@ -29,3 +29,13 @@ class ChatErrorState extends ChatState {
   @override
   List<Object> get props => [message];
 }
+
+class VoiceRecordingStartedState extends ChatState {}
+
+class VoiceRecordingStoppedState extends ChatState {}
+
+class VoiceRecordingCanceledState extends ChatState {}
+
+class VoiceSendingState extends ChatState {}
+
+class VoiceSentState extends ChatState {}

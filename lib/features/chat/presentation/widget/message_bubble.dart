@@ -366,26 +366,36 @@ class _MessageBubbleState extends State<MessageBubble> {
 
   Widget _buildMessageContent() {
     if (widget.messageType == MessageType.image) {
-      return Image.network(
-        widget.message,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.broken_image, size: 50, color: Colors.grey),
-            const SizedBox(height: 8),
-            Text(
-              'Failed to load image',
-              style: TextStyle(color: Colors.grey[600]),
+      return SizedBox(
+        width: 240, // Match parent's maxWidth
+        height: 240, // Set a fixed height for consistency
+        child: Image.network(
+          widget.userImage ?? widget.message,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            color: Colors.grey[200], // Optional background
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    'Failed to load image',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       );
     } else if (widget.messageType == MessageType.voice) {
       return _buildVoiceMessageContent();
-    } else {
-      return Text(widget.message);
     }
+    return Text(widget.message);
   }
 
   @override

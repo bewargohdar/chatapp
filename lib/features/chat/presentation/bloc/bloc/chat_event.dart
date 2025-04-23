@@ -24,3 +24,29 @@ class SendMessageEvent extends ChatEvent {
   @override
   List<Object> get props => [message];
 }
+
+class StartRecordingVoiceEvent extends ChatEvent {}
+
+class StopRecordingVoiceEvent extends ChatEvent {
+  final UserEntity? recipient;
+
+  StopRecordingVoiceEvent({this.recipient});
+
+  @override
+  List<Object> get props => recipient != null ? [recipient!] : [];
+}
+
+class CancelRecordingVoiceEvent extends ChatEvent {}
+
+class SendVoiceMessageEvent extends ChatEvent {
+  final String filePath;
+  final UserEntity? recipient;
+
+  SendVoiceMessageEvent({
+    required this.filePath,
+    this.recipient,
+  });
+
+  @override
+  List<Object> get props => [filePath];
+}

@@ -1,5 +1,7 @@
 import 'package:chatapp/features/chat/data/data_source/chat_data_source.dart';
 import 'package:chatapp/features/chat/data/repository/chat_repository_impl.dart';
+import 'package:chatapp/features/chat/data/services/voice_service.dart';
+import 'package:chatapp/features/chat/data/services/user_message_service.dart';
 import 'package:chatapp/features/chat/domain/repesotiry/chat_repository.dart';
 import 'package:chatapp/features/chat/domain/usecase/get_message.dart';
 import 'package:chatapp/features/chat/domain/usecase/send_message.dart';
@@ -44,12 +46,17 @@ void init() {
   sl.registerLazySingleton<HomeDataSource>(
       () => HomeDataSourceImpl(sl<FirebaseFirestore>(), sl<FirebaseAuth>()));
 
+  // Services
+  sl.registerLazySingleton<VoiceService>(() => VoiceService());
+  sl.registerLazySingleton<UserMessageService>(() => UserMessageService());
+
   // Using Lazy singleton for Firebase to defer initialization until needed
   sl.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
   sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
 
   //bloc
   sl.registerFactory(() => AuthBloc(sl(), sl()));
-  sl.registerFactory(() => ChatBloc(sl(), sl()));
+  sl.registerFactory(
+      () => ChatBloc(sl(), sl(), sl<VoiceService>(), sl<UserMessageService>()));
   sl.registerFactory(() => HomeBloc(sl()));
 }
