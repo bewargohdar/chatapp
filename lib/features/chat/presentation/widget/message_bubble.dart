@@ -218,7 +218,7 @@ class _MessageBubbleState extends State<MessageBubble> {
     // Colors based on message sender
     final Color primaryColor = widget.isMe ? Colors.grey[800]! : Colors.white;
     final Color progressColor = widget.isMe
-        ? Color(0xFF00A884)
+        ? Colors.deepPurpleAccent
         : Color(0xFF70C6FF); // WhatsApp green / light blue
     final Color backgroundColor =
         widget.isMe ? Colors.grey[300]! : Colors.white.withOpacity(0.2);

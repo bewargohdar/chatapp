@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 abstract class HomeDataSource {
-  Future<DataState<List<UserEntity>>> getUsers();
+  Future<DataState<List<UserEntity>>> getUsers([String? query]);
 }
 
 class HomeDataSourceImpl implements HomeDataSource {
@@ -14,7 +14,7 @@ class HomeDataSourceImpl implements HomeDataSource {
   HomeDataSourceImpl(this._firestore, this._auth);
 
   @override
-  Future<DataState<List<UserEntity>>> getUsers() async {
+  Future<DataState<List<UserEntity>>> getUsers([String? query]) async {
     try {
       final currentUser = _auth.currentUser;
       final usersCollection = await _firestore.collection('users').get();
@@ -27,6 +27,9 @@ class HomeDataSourceImpl implements HomeDataSource {
                 image: doc.data().containsKey('image') ? doc['image'] : null,
               ))
           .where((user) => user.id != currentUser?.uid) // Exclude current user
+          .where((user) =>
+              query == null ||
+              user.username?.contains(query) == true) // Filter by query
           .toList();
 
       return DataSuccess(users);

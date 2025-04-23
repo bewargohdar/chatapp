@@ -8,3 +8,12 @@ abstract class HomeEvent extends Equatable {
 class LoadUsersEvent extends HomeEvent {}
 
 class RefreshUsersEvent extends HomeEvent {}
+
+class SearchUsersEvent extends HomeEvent {
+  final String query;
+
+  SearchUsersEvent(this.query);
+
+  @override
+  List<Object> get props => [query];
+}

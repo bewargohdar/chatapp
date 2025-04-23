@@ -3,13 +3,13 @@ import 'package:chatapp/core/usecase/usecase.dart';
 import 'package:chatapp/features/auth/domain/entity/user.dart';
 import 'package:chatapp/features/home/domain/repository/home_repository.dart';
 
-class GetUsersUseCase extends UseCase<DataState<List<UserEntity>>, void> {
+class GetUsersUseCase extends UseCase<DataState<List<UserEntity>>, String?> {
   final HomeRepository _repository;
 
   GetUsersUseCase(this._repository);
 
   @override
-  Future<DataState<List<UserEntity>>> call(void params) {
-    return _repository.getUsers();
+  Future<DataState<List<UserEntity>>> call(String? query) {
+    return _repository.getUsers(query);
   }
 }

@@ -10,6 +10,19 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   HomeBloc(this._getUsersUseCase) : super(HomeInitialState()) {
     on<LoadUsersEvent>(_onLoadUsers);
     on<RefreshUsersEvent>(_onRefreshUsers);
+    on<SearchUsersEvent>(_onSearchUsers);
+  }
+
+  Future<void> _onSearchUsers(
+      SearchUsersEvent event, Emitter<HomeState> emit) async {
+    emit(HomeLoadingState());
+    final dataState = await _getUsersUseCase(event.query);
+
+    if (dataState is DataSuccess) {
+      emit(HomeLoadedState(dataState.data ?? []));
+    } else if (dataState is DataError) {
+      emit(HomeErrorState(dataState.error?.toString() ?? 'Unknown error'));
+    }
   }
 
   Future<void> _onLoadUsers(

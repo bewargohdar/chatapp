@@ -9,7 +9,7 @@ class HomeRepositoryImpl implements HomeRepository {
   HomeRepositoryImpl(this._dataSource);
 
   @override
-  Future<DataState<List<UserEntity>>> getUsers() {
-    return _dataSource.getUsers();
+  Future<DataState<List<UserEntity>>> getUsers([String? query]) {
+    return _dataSource.getUsers(query);
   }
 }
