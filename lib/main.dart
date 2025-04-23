@@ -3,6 +3,7 @@ import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_bloc.dart';
 import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_event.dart';
 import 'package:chatapp/features/home/presentation/bloc/home_bloc.dart';
 import 'package:chatapp/features/home/presentation/screens/home_screen.dart';
+
 import 'package:chatapp/features/splash.dart';
 import 'package:chatapp/firebase_options.dart';
 import 'package:chatapp/features/auth/presentation/screens/auth.dart';
@@ -17,7 +18,10 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialize dependency injection
   init();
+
   runApp(const MyApp());
 }
 
@@ -50,17 +54,18 @@ class MyApp extends StatelessWidget {
           ),
         ),
         home: StreamBuilder(
-            stream: FirebaseAuth.instance.authStateChanges(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SplashScreen();
-              }
-              if (snapshot.hasData) {
-                return const HomeScreen();
-              } else {
-                return const AuthScreen();
-              }
-            }),
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SplashScreen();
+            }
+            if (snapshot.hasData) {
+              return const HomeScreen();
+            } else {
+              return const AuthScreen();
+            }
+          },
+        ),
       ),
     );
   }
