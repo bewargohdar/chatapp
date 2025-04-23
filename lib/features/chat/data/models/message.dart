@@ -14,6 +14,12 @@ class MessageModel extends MessageEntity {
   });
 
   factory MessageModel.fromFirebase(Map<String, dynamic> json) {
+    int messageTypeIndex = json['messageType'] ?? -1;
+    MessageType messageType =
+        (messageTypeIndex >= 0 && messageTypeIndex < MessageType.values.length)
+            ? MessageType.values[messageTypeIndex]
+            : MessageType.text;
+
     return MessageModel(
       userId: json['userId'] ?? '',
       text: json['text'] ?? '',
@@ -22,9 +28,7 @@ class MessageModel extends MessageEntity {
       createdAt: (json['createdAt'] as Timestamp).toDate(),
       recipientId: json['recipientId'],
       voiceUrl: json['voiceUrl'],
-      messageType: json['messageType'] != null
-          ? MessageType.values[json['messageType']]
-          : MessageType.text,
+      messageType: messageType,
     );
   }
 

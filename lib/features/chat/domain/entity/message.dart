@@ -23,4 +23,5 @@ class MessageEntity {
 enum MessageType {
   text,
   voice,
+  image,
 }

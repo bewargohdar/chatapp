@@ -364,6 +364,30 @@ class _MessageBubbleState extends State<MessageBubble> {
     );
   }
 
+  Widget _buildMessageContent() {
+    if (widget.messageType == MessageType.image) {
+      return Image.network(
+        widget.message,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+            const SizedBox(height: 8),
+            Text(
+              'Failed to load image',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      );
+    } else if (widget.messageType == MessageType.voice) {
+      return _buildVoiceMessageContent();
+    } else {
+      return Text(widget.message);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -449,20 +473,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                       vertical: 4,
                       horizontal: 12,
                     ),
-                    child: widget.messageType == MessageType.voice
-                        ? _buildVoiceMessageContent()
-                        : Text(
-                            widget.message,
-                            style: TextStyle(
-                              // Add a little line spacing to make the text look nicer
-                              // when multilined.
-                              height: 1.3,
-                              color: widget.isMe
-                                  ? Colors.black87
-                                  : theme.colorScheme.onSecondary,
-                            ),
-                            softWrap: true,
-                          ),
+                    child: _buildMessageContent(),
                   ),
                 ],
               ),

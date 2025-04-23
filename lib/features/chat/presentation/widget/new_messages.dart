@@ -12,6 +12,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:chatapp/features/chat/domain/entity/message.dart';
+import 'package:image_picker/image_picker.dart';
 
 class NewMessages extends StatefulWidget {
   final UserEntity? selectedUser;
@@ -31,6 +32,7 @@ class _NewMessagesState extends State<NewMessages> {
   bool _isRecording = false;
   AnotherAudioRecorder? _recorder;
   String? _recordingPath;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void dispose() {
@@ -279,6 +281,88 @@ class _NewMessagesState extends State<NewMessages> {
     }
   }
 
+  Future<void> _pickImage() async {
+    final XFile? pickedImage =
+        await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedImage != null) {
+      await _sendImageMessage(pickedImage);
+    }
+  }
+
+  Future<void> _sendImageMessage(XFile image) async {
+    if (_isSending) return;
+
+    setState(() {
+      _isSending = true;
+    });
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please log in to send messages')),
+          );
+        }
+        return;
+      }
+
+      final userData = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (!userData.exists || userData.data() == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('User data not found')),
+          );
+        }
+        return;
+      }
+
+      final username = userData.data()?['username'] ?? 'Anonymous';
+      final imageUrl = userData.data()?['image'] ?? '';
+
+      // Upload image file to Firebase Storage
+      final fileName = 'image_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final storageRef =
+          FirebaseStorage.instance.ref().child('chat_images').child(fileName);
+
+      final File file = File(image.path);
+      final uploadTask = await storageRef.putFile(file);
+      final String imageDownloadUrl = await uploadTask.ref.getDownloadURL();
+
+      // Create MessageModel and send it through the BLoC
+      final message = MessageModel(
+        userId: user.uid,
+        text: '', // No text for image message
+        username: username,
+        imageUrl: imageDownloadUrl,
+        createdAt: DateTime.now(),
+        recipientId: widget.selectedUser?.id,
+        messageType: MessageType.image,
+      );
+
+      if (mounted) {
+        context.read<ChatBloc>().add(SendMessageEvent(message));
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send image message: $error')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -339,6 +423,10 @@ class _NewMessagesState extends State<NewMessages> {
               onPressed: _sendMessage,
               color: Theme.of(context).colorScheme.primary,
             ),
+          IconButton(
+            icon: Icon(Icons.image),
+            onPressed: _pickImage,
+          ),
         ],
       ),
     );
