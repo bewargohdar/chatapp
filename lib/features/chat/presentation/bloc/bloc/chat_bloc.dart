@@ -1,15 +1,11 @@
 import 'package:bloc/bloc.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../../core/res/data_state.dart';
-import '../../../data/models/message.dart';
 import '../../../data/services/voice_service.dart';
 import '../../../data/services/user_message_service.dart';
-import '../../../domain/entity/message.dart';
+import '../../../../auth/domain/entity/user.dart';
 import '../../../domain/usecase/get_message.dart';
 import '../../../domain/usecase/send_message.dart';
-import '../../../../auth/domain/entity/user.dart';
 import 'chat_event.dart';
 import 'chat_state.dart';
 

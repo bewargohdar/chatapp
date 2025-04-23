@@ -12,7 +12,7 @@ class UserMessageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // Get current user data
-  Future<Map<String, dynamic>?> getCurrentUserData() async {
+  Future<Map<String, dynamic>> getCurrentUserData() async {
     final user = _auth.currentUser;
     if (user == null) {
       throw Exception('User not authenticated');
@@ -34,9 +34,8 @@ class UserMessageService {
   Future<MessageModel> createTextMessage(
       String text, String? recipientId) async {
     final userData = await getCurrentUserData();
-
     return MessageModel(
-      userId: userData!['userId'],
+      userId: userData['userId'],
       text: text,
       username: userData['username'],
       imageUrl: userData['imageUrl'],
@@ -60,7 +59,7 @@ class UserMessageService {
     final String imageDownloadUrl = await uploadTask.ref.getDownloadURL();
 
     return MessageModel(
-      userId: userData!['userId'],
+      userId: userData['userId'],
       text: '', // No text for image message
       username: userData['username'],
       imageUrl: userData['imageUrl'], // User's profile image
@@ -75,9 +74,8 @@ class UserMessageService {
   Future<MessageModel> createVoiceMessage(
       String voiceUrl, String? recipientId) async {
     final userData = await getCurrentUserData();
-
     return MessageModel(
-      userId: userData!['userId'],
+      userId: userData['userId'],
       text: '🎤 Voice message',
       username: userData['username'],
       imageUrl: userData['imageUrl'],

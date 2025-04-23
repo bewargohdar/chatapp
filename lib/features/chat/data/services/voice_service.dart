@@ -10,17 +10,10 @@ class VoiceService {
   bool _isRecording = false;
 
   bool get isRecording => _isRecording;
-  String? get recordingPath => _recordingPath;
-
-  // Check microphone permission
-  Future<bool> checkPermission() async {
-    final status = await Permission.microphone.request();
-    return status == PermissionStatus.granted;
-  }
 
   // Start recording
   Future<void> startRecording() async {
-    if (!await checkPermission()) {
+    if (!await Permission.microphone.request().isGranted) {
       throw Exception('Microphone permission not granted');
     }
 
@@ -47,7 +40,6 @@ class VoiceService {
     try {
       final recording = await _recorder!.stop();
       _isRecording = false;
-
       return recording?.path;
     } catch (e) {
       _isRecording = false;
@@ -61,7 +53,6 @@ class VoiceService {
 
     try {
       await _recorder!.stop();
-
       if (_recordingPath != null) {
         final file = File(_recordingPath!);
         if (await file.exists()) {
