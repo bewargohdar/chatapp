@@ -1,7 +1,9 @@
 import 'package:chatapp/features/chat/data/models/message.dart';
+import 'package:chatapp/features/chat/domain/entity/message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:chatapp/core/res/data_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 abstract class ChatDataSource {
   Stream<DataState<List<MessageModel>>> fetchMessages(String? recipientId);
@@ -12,6 +14,7 @@ class ChatDataSourceImpl implements ChatDataSource {
   final FirebaseFirestore _firestore;
 
   ChatDataSourceImpl(this._firestore);
+
   @override
   Stream<DataState<List<MessageModel>>> fetchMessages(String? recipientId) {
     try {
@@ -31,7 +34,6 @@ class ChatDataSourceImpl implements ChatDataSource {
         final messages = snapshot.docs.map((doc) {
           return MessageModel.fromFirebase(doc.data() as Map<String, dynamic>);
         }).toList();
-
         // If recipientId is provided, filter messages in memory
         if (recipientId != null) {
           messages.removeWhere((message) =>
@@ -56,6 +58,9 @@ class ChatDataSourceImpl implements ChatDataSource {
 
       return DataSuccess(data);
     } catch (e) {
+      if (kDebugMode) {
+        print('Error sending message: $e');
+      }
       // Return error state in case of exceptions
       return DataError(Exception('Failed to send message: $e'));
     }
