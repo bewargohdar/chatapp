@@ -13,8 +13,8 @@ import 'features/auth/presentation/bloc/auth_bloc.dart';
 // Chat feature
 import 'package:chatapp/features/chat/data/data_source/chat_data_source.dart';
 import 'package:chatapp/features/chat/data/repository/chat_repository_impl.dart';
-import 'package:chatapp/features/chat/data/services/voice_service.dart';
-import 'package:chatapp/features/chat/data/services/user_message_service.dart';
+import 'package:chatapp/core/services/voice_service.dart';
+import 'package:chatapp/core/services/user_message_service.dart';
 import 'package:chatapp/features/chat/domain/repesotiry/chat_repository.dart';
 import 'package:chatapp/features/chat/domain/usecase/get_message.dart';
 import 'package:chatapp/features/chat/domain/usecase/send_message.dart';

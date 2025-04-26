@@ -1,8 +1,8 @@
 import 'package:bloc/bloc.dart';
 
 import '../../../../../core/res/data_state.dart';
-import '../../../data/services/voice_service.dart';
-import '../../../data/services/user_message_service.dart';
+import '../../../../../core/services/voice_service.dart';
+import '../../../../../core/services/user_message_service.dart';
 import '../../../../auth/domain/entity/user.dart';
 import '../../../domain/usecase/get_message.dart';
 import '../../../domain/usecase/send_message.dart';

@@ -218,142 +218,166 @@ class _MessageBubbleState extends State<MessageBubble> {
     // Colors based on message sender
     final Color primaryColor = widget.isMe ? Colors.grey[800]! : Colors.white;
     final Color progressColor = widget.isMe
-        ? Colors.deepPurpleAccent
-        : Color(0xFF70C6FF); // WhatsApp green / light blue
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.secondary;
     final Color backgroundColor =
         widget.isMe ? Colors.grey[300]! : Colors.white.withOpacity(0.2);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 2.0),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color:
+            widget.isMe ? Colors.grey.shade200 : progressColor.withOpacity(0.1),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Play/Pause button (WhatsApp style)
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: progressColor,
-            ),
-            child: IconButton(
-              icon: Icon(
-                _isPlaying ? Icons.pause : Icons.play_arrow,
-                color: Colors.white,
-                size: 18,
-              ),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              onPressed: _playPause,
-            ),
-          ),
-
-          const SizedBox(width: 8),
-
-          // Progress indicator and duration
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // WhatsApp-style progress line with "bubbles"
-                SizedBox(
-                  height: 26,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Background track
-                      Container(
-                        height: 3.5,
-                        decoration: BoxDecoration(
-                          color: backgroundColor,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-
-                      // Active track
-                      Row(
-                        children: [
-                          Flexible(
-                            flex: (progress * 100).toInt(),
-                            child: Container(
-                              height: 3.5,
-                              decoration: BoxDecoration(
-                                color: progressColor,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                          ),
-                          if (progress < 1)
-                            Flexible(
-                              flex: 100 - (progress * 100).toInt(),
-                              child: Container(),
-                            ),
-                        ],
-                      ),
-
-                      // Waveform-like dots
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: List.generate(
-                          30, // Number of dots
-                          (index) {
-                            final isActive = index / 30 <= progress;
-                            return Container(
-                              width: 2,
-                              height: isActive ? 15 : 7,
-                              decoration: BoxDecoration(
-                                color:
-                                    isActive ? progressColor : backgroundColor,
-                                borderRadius: BorderRadius.circular(1),
-                              ),
-                            );
-                          },
-                        ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Play/Pause button with modernized design
+              GestureDetector(
+                onTap: _playPause,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: progressColor,
+                    boxShadow: [
+                      BoxShadow(
+                        color: progressColor.withOpacity(0.3),
+                        blurRadius: 8,
+                        spreadRadius: 0.5,
                       ),
                     ],
                   ),
+                  child: Icon(
+                    _isPlaying ? Icons.pause : Icons.play_arrow,
+                    color: Colors.white,
+                    size: 24,
+                  ),
                 ),
+              ),
+              const SizedBox(width: 12),
 
-                // Time indicator
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _formatDuration(_position),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: primaryColor.withOpacity(0.7),
-                        ),
-                      ),
-                      _isLoadingDuration
-                          ? SizedBox(
-                              width: 12,
-                              height: 12,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: primaryColor.withOpacity(0.7),
-                              ))
-                          : Row(
-                              children: [
-                                Icon(
-                                  Icons.mic,
-                                  size: 12,
-                                  color: primaryColor.withOpacity(0.7),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _formatDuration(_duration),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: primaryColor.withOpacity(0.7),
+              // Animated waveform visualization
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Waveform
+                    Container(
+                      height: 30,
+                      alignment: Alignment.center,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(3),
+                        child: LayoutBuilder(builder: (context, constraints) {
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: List.generate(
+                              26, // Number of bars
+                              (index) {
+                                // Create a more realistic waveform pattern with varied heights
+                                final sinHeight = (index % 3 == 0)
+                                    ? 0.9
+                                    : (index % 2 == 0)
+                                        ? 0.6
+                                        : 0.3;
+
+                                final barHeight =
+                                    constraints.maxHeight * sinHeight;
+                                final isActive = index / 26 <= progress;
+
+                                return Container(
+                                  width: 3,
+                                  height: barHeight,
+                                  decoration: BoxDecoration(
+                                    color: isActive
+                                        ? progressColor
+                                        : backgroundColor,
+                                    borderRadius: BorderRadius.circular(1.5),
                                   ),
-                                ),
-                              ],
+                                );
+                              },
                             ),
-                    ],
+                          );
+                        }),
+                      ),
+                    ),
+
+                    // Duration indicator
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _formatDuration(_position),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color:
+                                widget.isMe ? Colors.grey[600] : progressColor,
+                          ),
+                        ),
+                        _isLoadingDuration
+                            ? SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: progressColor,
+                                ),
+                              )
+                            : Row(
+                                children: [
+                                  Icon(
+                                    Icons.mic,
+                                    size: 12,
+                                    color: widget.isMe
+                                        ? Colors.grey[600]
+                                        : progressColor,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _formatDuration(_duration),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: widget.isMe
+                                          ? Colors.grey[600]
+                                          : progressColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // Display "Voice message" text with icon
+          Padding(
+            padding: const EdgeInsets.only(top: 6.0, left: 4.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.multitrack_audio_outlined,
+                  size: 14,
+                  color: widget.isMe ? Colors.grey[600] : progressColor,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Voice message',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                    color: widget.isMe ? Colors.grey[600] : progressColor,
                   ),
                 ),
               ],
@@ -362,40 +386,6 @@ class _MessageBubbleState extends State<MessageBubble> {
         ],
       ),
     );
-  }
-
-  Widget _buildMessageContent() {
-    if (widget.messageType == MessageType.image) {
-      return SizedBox(
-        width: 240, // Match parent's maxWidth
-        height: 240, // Set a fixed height for consistency
-        child: Image.network(
-          widget.userImage ?? widget.message,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => Container(
-            color: Colors.grey[200], // Optional background
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text(
-                    'Failed to load image',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    } else if (widget.messageType == MessageType.voice) {
-      return _buildVoiceMessageContent();
-    }
-    return Text(widget.message);
   }
 
   @override
@@ -483,7 +473,40 @@ class _MessageBubbleState extends State<MessageBubble> {
                       vertical: 4,
                       horizontal: 12,
                     ),
-                    child: _buildMessageContent(),
+                    child: widget.messageType == MessageType.image
+                        ? SizedBox(
+                            width: 240,
+                            height: 240,
+                            child: Image.network(
+                              widget.userImage ?? widget.message,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
+                                color: Colors.grey[200],
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.broken_image,
+                                        size: 50, color: Colors.grey),
+                                    const SizedBox(height: 8),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8.0),
+                                      child: Text(
+                                        'Failed to load image',
+                                        textAlign: TextAlign.center,
+                                        style:
+                                            TextStyle(color: Colors.grey[600]),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          )
+                        : widget.messageType == MessageType.voice
+                            ? _buildVoiceMessageContent()
+                            : Text(widget.message),
                   ),
                 ],
               ),

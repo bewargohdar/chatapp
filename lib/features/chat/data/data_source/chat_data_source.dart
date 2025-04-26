@@ -1,5 +1,5 @@
 import 'package:chatapp/features/chat/data/models/message.dart';
-import 'package:chatapp/features/chat/domain/entity/message.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:chatapp/core/res/data_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -32,7 +32,7 @@ class ChatDataSourceImpl implements ChatDataSource {
       // If a specific conversation is requested, we'll filter in memory after fetching
       return query.snapshots().map((snapshot) {
         final messages = snapshot.docs.map((doc) {
-          return MessageModel.fromFirebase(doc.data() as Map<String, dynamic>);
+          return MessageModel.fromFirebase(doc.data());
         }).toList();
         // If recipientId is provided, filter messages in memory
         if (recipientId != null) {

@@ -42,91 +42,76 @@ class AuthCard extends StatelessWidget {
                 UserImagePicker(
                   onImagePicked: onImagePicked,
                 ),
-              _buildEmailField(),
+              TextFormField(
+                controller: emailController,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: const Icon(Icons.email),
+                  suffixIcon: emailController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () => emailController.clear(),
+                        )
+                      : null,
+                ),
+                keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
+                textCapitalization: TextCapitalization.none,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter an email address.';
+                  }
+                  final emailRegex = RegExp(
+                      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+                  if (!emailRegex.hasMatch(value.trim())) {
+                    return 'Please enter a valid email address.';
+                  }
+                  return null;
+                },
+              ),
               const SizedBox(height: 10),
-              if (!isLogin) _buildUsernameField(),
-              _buildPasswordField(context),
+              if (!isLogin)
+                TextFormField(
+                  controller: usernameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Username',
+                    prefixIcon: Icon(Icons.person),
+                  ),
+                  enableSuggestions: false,
+                  validator: (value) {
+                    if (value == null ||
+                        value.trim().isEmpty ||
+                        value.trim().length < 4) {
+                      return 'Please enter a valid username (at least 4 characters).';
+                    }
+                    return null;
+                  },
+                ),
+              _PasswordField(
+                passwordController: passwordController,
+              ),
               const SizedBox(height: 20),
               if (isLoading) const CircularProgressIndicator(),
-              if (!isLoading) _buildSubmitButton(context),
-              _buildToggleAuthModeButton(),
+              if (!isLoading)
+                ElevatedButton(
+                  onPressed: onSubmit,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 50),
+                    backgroundColor:
+                        Theme.of(context).colorScheme.primaryContainer,
+                    foregroundColor: Theme.of(context).colorScheme.primary,
+                  ),
+                  child: Text(isLogin ? 'Login' : 'Signup'),
+                ),
+              TextButton(
+                onPressed: !isLoading ? onToggleAuthMode : null,
+                child: Text(
+                  isLogin ? 'Create new account' : 'I already have an account',
+                ),
+              ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmailField() {
-    return TextFormField(
-      controller: emailController,
-      decoration: InputDecoration(
-        labelText: 'Email',
-        prefixIcon: const Icon(Icons.email),
-        suffixIcon: emailController.text.isNotEmpty
-            ? IconButton(
-                icon: const Icon(Icons.clear),
-                onPressed: () => emailController.clear(),
-              )
-            : null,
-      ),
-      keyboardType: TextInputType.emailAddress,
-      autocorrect: false,
-      textCapitalization: TextCapitalization.none,
-      validator: (value) {
-        if (value == null || value.trim().isEmpty) {
-          return 'Please enter an email address.';
-        }
-        final emailRegex =
-            RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
-        if (!emailRegex.hasMatch(value.trim())) {
-          return 'Please enter a valid email address.';
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildUsernameField() {
-    return TextFormField(
-      controller: usernameController,
-      decoration: const InputDecoration(
-        labelText: 'Username',
-        prefixIcon: Icon(Icons.person),
-      ),
-      enableSuggestions: false,
-      validator: (value) {
-        if (value == null || value.trim().isEmpty || value.trim().length < 4) {
-          return 'Please enter a valid username (at least 4 characters).';
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildPasswordField(BuildContext context) {
-    return _PasswordField(
-      passwordController: passwordController,
-    );
-  }
-
-  Widget _buildSubmitButton(BuildContext context) {
-    return ElevatedButton(
-      onPressed: onSubmit,
-      style: ElevatedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 50),
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-        foregroundColor: Theme.of(context).colorScheme.primary,
-      ),
-      child: Text(isLogin ? 'Login' : 'Signup'),
-    );
-  }
-
-  Widget _buildToggleAuthModeButton() {
-    return TextButton(
-      onPressed: !isLoading ? onToggleAuthMode : null,
-      child: Text(
-        isLogin ? 'Create new account' : 'I already have an account',
       ),
     );
   }

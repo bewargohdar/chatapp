@@ -1,5 +1,5 @@
 import 'package:chatapp/features/auth/domain/entity/user.dart';
-import 'package:chatapp/features/chat/data/services/user_message_service.dart';
+import 'package:chatapp/core/services/user_message_service.dart';
 import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_bloc.dart';
 import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_event.dart';
 import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_state.dart';
@@ -20,20 +20,38 @@ class NewMessages extends StatefulWidget {
   State<NewMessages> createState() => _NewMessagesState();
 }
 
-class _NewMessagesState extends State<NewMessages> {
+class _NewMessagesState extends State<NewMessages>
+    with SingleTickerProviderStateMixin {
   final _messageController = TextEditingController();
-  bool _isSending = false;
   final ImagePicker _picker = ImagePicker();
   final UserMessageService _userMessageService =
       GetIt.instance<UserMessageService>();
 
+  // Animation controller for recording animation
+  late AnimationController _animationController;
+  late Animation<double> _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+  }
+
   @override
   void dispose() {
     _messageController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
-  // Voice control methods that dispatch events to the bloc
+  // Voice control methods
   void _startVoiceRecording() {
     context.read<ChatBloc>().add(StartRecordingVoiceEvent());
   }
@@ -50,19 +68,9 @@ class _NewMessagesState extends State<NewMessages> {
 
   Future<void> _sendMessage() async {
     final enteredMessage = _messageController.text.trim();
-
-    if (enteredMessage.isEmpty) {
-      return;
-    }
-
-    if (_isSending) return; // Prevent multiple submissions
-
-    setState(() {
-      _isSending = true;
-    });
+    if (enteredMessage.isEmpty) return;
 
     try {
-      // Create and send text message through the service
       final message = await _userMessageService.createTextMessage(
         enteredMessage,
         widget.selectedUser?.id,
@@ -70,21 +78,13 @@ class _NewMessagesState extends State<NewMessages> {
 
       if (mounted) {
         context.read<ChatBloc>().add(SendMessageEvent(message));
+        _messageController.clear();
       }
-
-      // Clear input after sending message
-      _messageController.clear();
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to send message: $error')),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSending = false;
-        });
       }
     }
   }
@@ -98,14 +98,7 @@ class _NewMessagesState extends State<NewMessages> {
   }
 
   Future<void> _sendImageMessage(XFile image) async {
-    if (_isSending) return;
-
-    setState(() {
-      _isSending = true;
-    });
-
     try {
-      // Create and send image message through the service
       final message = await _userMessageService.createImageMessage(
         image,
         widget.selectedUser?.id,
@@ -119,12 +112,6 @@ class _NewMessagesState extends State<NewMessages> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to send image message: $error')),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSending = false;
-        });
       }
     }
   }
@@ -141,77 +128,246 @@ class _NewMessagesState extends State<NewMessages> {
 
         if (state is VoiceSentState) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Voice message sent')),
+            const SnackBar(
+              content: Text('Voice message sent'),
+              behavior: SnackBarBehavior.floating,
+            ),
           );
+        }
+
+        // Start or stop the animation based on recording state
+        if (state is VoiceRecordingStartedState) {
+          _animationController.repeat(reverse: true);
+        } else if (state is VoiceRecordingStoppedState ||
+            state is VoiceRecordingCanceledState) {
+          _animationController.stop();
         }
       },
       builder: (context, state) {
-        bool isRecording = state is VoiceRecordingStartedState;
-        bool isSending = _isSending || state is VoiceSendingState;
+        final bool isRecording = state is VoiceRecordingStartedState;
+        final bool isSending = state is VoiceSendingState;
+        final primaryColor = Theme.of(context).colorScheme.primary;
+        final secondaryColor = Theme.of(context).colorScheme.secondary;
 
-        return Padding(
-          padding: const EdgeInsets.only(left: 15, right: 1, bottom: 14),
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                offset: const Offset(0, -1),
+                blurRadius: 6,
+              ),
+            ],
+          ),
           child: Row(
             children: [
-              // Voice recording button
-              isRecording
-                  ? Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.send),
-                          onPressed: _stopVoiceRecording,
-                          color: Theme.of(context).colorScheme.primary,
+              // Voice recording/cancellation area
+              if (isRecording)
+                Expanded(
+                  child: GestureDetector(
+                    onHorizontalDragEnd: (_) => _cancelVoiceRecording(),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0, vertical: 12.0),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: primaryColor.withOpacity(0.3),
+                          width: 1.5,
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.cancel),
-                          onPressed: _cancelVoiceRecording,
-                          color: Colors.red,
-                        ),
-                        const Text('Recording...',
-                            style: TextStyle(color: Colors.red)),
-                      ],
-                    )
-                  : IconButton(
-                      icon: const Icon(Icons.mic),
-                      onPressed: _startVoiceRecording,
-                      color: Theme.of(context).colorScheme.secondary,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Animated recording indicator
+                          AnimatedBuilder(
+                            animation: _animationController,
+                            builder: (context, child) {
+                              return Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: primaryColor,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: primaryColor.withOpacity(0.5),
+                                      blurRadius: 5.0 * _pulseAnimation.value,
+                                      spreadRadius: 2.0 * _pulseAnimation.value,
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Recording...',
+                                style: TextStyle(
+                                  color: primaryColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Release to send, slide left to cancel',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 24),
+                          Icon(
+                            Icons.keyboard_arrow_left,
+                            color: primaryColor,
+                          ),
+                        ],
+                      ),
                     ),
-              // Text input field
-              Expanded(
-                child: TextFormField(
-                  controller: _messageController,
-                  textCapitalization: TextCapitalization.sentences,
-                  autocorrect: true,
-                  enabled: !isRecording,
-                  enableSuggestions: true,
-                  decoration: InputDecoration(
-                    labelText: isRecording
-                        ? 'Recording voice message...'
-                        : widget.selectedUser != null
-                            ? 'Message to ${widget.selectedUser!.username ?? widget.selectedUser!.email}'
-                            : 'Send a message...',
-                    suffixIcon: isSending
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : null,
+                  ),
+                )
+              else
+                Expanded(
+                  child: Card(
+                    margin: EdgeInsets.zero,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      side: BorderSide(
+                        color: Colors.grey.shade300,
+                        width: 1,
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: TextFormField(
+                        controller: _messageController,
+                        textCapitalization: TextCapitalization.sentences,
+                        autocorrect: true,
+                        enabled: !isRecording,
+                        enableSuggestions: true,
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          hintText: widget.selectedUser != null
+                              ? 'Message to ${widget.selectedUser!.username ?? widget.selectedUser!.email}'
+                              : 'Send a message...',
+                          hintStyle: TextStyle(
+                            color: Colors.grey[500],
+                            fontSize: 14,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                          suffixIcon: isSending
+                              ? Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: primaryColor,
+                                    ),
+                                  ),
+                                )
+                              : IconButton(
+                                  icon: const Icon(Icons.attach_file),
+                                  onPressed: _pickImage,
+                                  color: secondaryColor,
+                                  iconSize: 22,
+                                ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              // Send button
-              if (!isRecording)
-                IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: _sendMessage,
-                  color: Theme.of(context).colorScheme.primary,
+
+              const SizedBox(width: 8),
+
+              // Action button (send or voice record)
+              if (isRecording)
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryColor.withOpacity(0.3),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: FloatingActionButton(
+                    mini: true,
+                    backgroundColor: primaryColor,
+                    elevation: 4,
+                    child:
+                        const Icon(Icons.send, color: Colors.white, size: 20),
+                    onPressed: _stopVoiceRecording,
+                  ),
+                )
+              else if (_messageController.text.trim().isNotEmpty)
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryColor.withOpacity(0.3),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: FloatingActionButton(
+                    mini: true,
+                    backgroundColor: primaryColor,
+                    elevation: 4,
+                    child:
+                        const Icon(Icons.send, color: Colors.white, size: 20),
+                    onPressed: _sendMessage,
+                  ),
+                )
+              else
+                GestureDetector(
+                  onLongPress: _startVoiceRecording,
+                  onLongPressUp: _stopVoiceRecording,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: secondaryColor.withOpacity(0.3),
+                          blurRadius: 8,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: FloatingActionButton(
+                      mini: true,
+                      backgroundColor: secondaryColor,
+                      elevation: 4,
+                      child:
+                          const Icon(Icons.mic, color: Colors.white, size: 20),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Hold to record a voice message'),
+                            duration: Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
-              IconButton(
-                icon: const Icon(Icons.image),
-                onPressed: _pickImage,
-                color: Theme.of(context).colorScheme.secondary,
-              ),
             ],
           ),
         );
