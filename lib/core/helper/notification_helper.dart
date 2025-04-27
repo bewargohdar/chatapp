@@ -42,4 +42,46 @@ class NotificationHelper {
       );
     }
   }
+
+  // Send notification to another device
+  static Future<bool> sendToDevice({
+    required String token,
+    required String title,
+    required String body,
+    Map<String, dynamic>? data,
+    BuildContext? context,
+  }) async {
+    try {
+      final result = await _notificationService.sendNotificationWithServerKey(
+        recipientToken: token,
+        title: title,
+        body: body,
+        data: data,
+      );
+
+      if (context != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result
+                ? 'Notification sent successfully'
+                : 'Failed to send notification'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
+      return result;
+    } catch (e) {
+      if (context != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send notification: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+      return false;
+    }
+  }
 }
