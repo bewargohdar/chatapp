@@ -5,6 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:chatapp/core/services/notification_service.dart';
+import 'package:chatapp/server_injection.dart';
 
 import '../../../../core/res/data_state.dart';
 
@@ -18,6 +20,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
+  final NotificationService _notificationService = sl<NotificationService>();
 
   @override
   Future<DataState<UserModel>> login(String email, String password) async {
@@ -26,6 +29,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         email: email,
         password: password,
       );
+
+      // Save FCM token for the user
+      await _notificationService.saveToken(userCredential.user!.uid);
+
       return DataSuccess(
         UserModel(
           id: userCredential.user!.uid,
@@ -58,11 +65,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       final uploadTask = await storageRef.putFile(File(image.path));
       final imageUrl = await uploadTask.ref.getDownloadURL();
 
-      // Save additional data
+      // Get FCM token
+      final fcmToken = await _notificationService.getToken();
+
+      // Save additional data including FCM token
       await _firestore.collection('users').doc(userId).set({
         'username': username,
         'email': email,
         'image': imageUrl,
+        'fcmToken': fcmToken,
       });
 
       return DataSuccess(UserModel(id: userId, email: email));

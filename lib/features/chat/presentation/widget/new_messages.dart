@@ -314,59 +314,79 @@ class _NewMessagesState extends State<NewMessages>
                     onPressed: _stopVoiceRecording,
                   ),
                 )
-              else if (_messageController.text.trim().isNotEmpty)
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: primaryColor.withOpacity(0.3),
-                        blurRadius: 8,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                  child: FloatingActionButton(
-                    mini: true,
-                    backgroundColor: primaryColor,
-                    elevation: 4,
-                    child:
-                        const Icon(Icons.send, color: Colors.white, size: 20),
-                    onPressed: _sendMessage,
-                  ),
-                )
               else
-                GestureDetector(
-                  onLongPress: _startVoiceRecording,
-                  onLongPressUp: _stopVoiceRecording,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: secondaryColor.withOpacity(0.3),
-                          blurRadius: 8,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                    child: FloatingActionButton(
-                      mini: true,
-                      backgroundColor: secondaryColor,
-                      elevation: 4,
-                      child:
-                          const Icon(Icons.mic, color: Colors.white, size: 20),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Hold to record a voice message'),
-                            duration: Duration(seconds: 2),
-                            behavior: SnackBarBehavior.floating,
+                Row(
+                  children: [
+                    // Send button
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: primaryColor.withOpacity(0.3),
+                            blurRadius: 8,
+                            spreadRadius: 1,
                           ),
-                        );
-                      },
+                        ],
+                      ),
+                      child: FloatingActionButton(
+                        mini: true,
+                        backgroundColor: primaryColor,
+                        elevation: 4,
+                        child: const Icon(Icons.send,
+                            color: Colors.white, size: 20),
+                        onPressed: () {
+                          final text = _messageController.text.trim();
+                          if (text.isNotEmpty) {
+                            _sendMessage();
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please enter a message'),
+                                duration: Duration(seconds: 2),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        },
+                      ),
                     ),
-                  ),
+
+                    // Add mic button for voice recording
+                    const SizedBox(width: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: secondaryColor.withOpacity(0.3),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: GestureDetector(
+                        onLongPress: _startVoiceRecording,
+                        onLongPressUp: _stopVoiceRecording,
+                        child: FloatingActionButton(
+                          mini: true,
+                          backgroundColor: secondaryColor,
+                          elevation: 4,
+                          child: const Icon(Icons.mic,
+                              color: Colors.white, size: 20),
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Hold to record a voice message'),
+                                duration: Duration(seconds: 2),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
             ],
           ),

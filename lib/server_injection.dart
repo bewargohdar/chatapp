@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
+import 'package:chatapp/core/services/notification_service.dart';
+import 'package:chatapp/core/services/google_auth_service.dart';
 
 // Auth feature
 import 'features/auth/data/datasource/auth_remote_data_source.dart';
@@ -37,12 +39,15 @@ void init() {
   // Services
   sl.registerLazySingleton<VoiceService>(() => VoiceService());
   sl.registerLazySingleton<UserMessageService>(() => UserMessageService());
+  sl.registerLazySingleton<GoogleAuthService>(() => GoogleAuthService());
+  sl.registerLazySingleton<NotificationService>(
+      () => NotificationService(sl<GoogleAuthService>()));
 
   // Data sources
   sl.registerLazySingleton<AuthRemoteDataSource>(
       () => AuthRemoteDataSourceImpl());
-  sl.registerLazySingleton<ChatDataSource>(
-      () => ChatDataSourceImpl(sl<FirebaseFirestore>()));
+  sl.registerLazySingleton<ChatDataSource>(() =>
+      ChatDataSourceImpl(sl<FirebaseFirestore>(), sl<NotificationService>()));
   sl.registerLazySingleton<HomeDataSource>(
       () => HomeDataSourceImpl(sl<FirebaseFirestore>(), sl<FirebaseAuth>()));
 

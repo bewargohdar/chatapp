@@ -3,6 +3,7 @@ import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_bloc.dart';
 import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_event.dart';
 import 'package:chatapp/features/home/presentation/bloc/home_bloc.dart';
 import 'package:chatapp/features/home/presentation/screens/home_screen.dart';
+import 'package:chatapp/core/services/notification_service.dart';
 
 import 'package:chatapp/features/splash.dart';
 import 'package:chatapp/firebase_options.dart';
@@ -12,6 +13,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/foundation.dart';
+import 'core/services/push_notification_tester.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +24,30 @@ void main() async {
 
   // Initialize dependency injection
   init();
+
+  // Check if service account is configured
+  final hasServiceAccount =
+      await PushNotificationTester.isServiceAccountConfigured();
+  if (!hasServiceAccount && kDebugMode) {
+    print(
+        'WARNING: Service account file missing. FCM notifications will not work!');
+    print('Please add service-account.json to assets/credentials/');
+  }
+
+  // Initialize notification service
+  try {
+    await sl<NotificationService>().initialize();
+
+    // Print the FCM token in debug mode
+    if (kDebugMode) {
+      await PushNotificationTester.printToken();
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      print('Error initializing notification service: $e');
+      print('App will continue without notification functionality');
+    }
+  }
 
   runApp(const MyApp());
 }

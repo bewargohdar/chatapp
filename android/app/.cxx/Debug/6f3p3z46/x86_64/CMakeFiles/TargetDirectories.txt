@@ -1,0 +1,2 @@
+/Users/bewar/chatapp/android/app/.cxx/Debug/6f3p3z46/x86_64/CMakeFiles/edit_cache.dir
+/Users/bewar/chatapp/android/app/.cxx/Debug/6f3p3z46/x86_64/CMakeFiles/rebuild_cache.dir

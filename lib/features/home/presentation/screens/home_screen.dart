@@ -4,6 +4,8 @@ import 'package:chatapp/features/home/presentation/bloc/home_bloc.dart';
 import 'package:chatapp/features/home/presentation/bloc/home_event.dart';
 import 'package:chatapp/features/home/presentation/bloc/home_state.dart';
 import 'package:chatapp/features/home/presentation/widget/user_list_item.dart';
+import 'package:chatapp/core/services/notification_settings_screen.dart';
+import 'package:chatapp/features/home/presentation/screens/notification_test_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -27,6 +29,15 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Chat App'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () => _navigateToNotificationTest(context),
+            tooltip: 'Test Notifications',
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => _navigateToNotificationSettings(context),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => FirebaseAuth.instance.signOut(),
@@ -100,6 +111,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
           return const Center(child: Text('Something went wrong'));
         },
+      ),
+    );
+  }
+
+  void _navigateToNotificationSettings(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const NotificationSettingsScreen(),
+      ),
+    );
+  }
+
+  void _navigateToNotificationTest(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const NotificationTestScreen(),
       ),
     );
   }
