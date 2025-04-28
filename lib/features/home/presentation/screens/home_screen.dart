@@ -1,9 +1,11 @@
 import 'package:chatapp/features/auth/domain/entity/user.dart';
+import 'package:chatapp/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:chatapp/features/chat/presentation/screens/chat.dart';
 import 'package:chatapp/features/home/presentation/bloc/home_bloc.dart';
 import 'package:chatapp/features/home/presentation/bloc/home_event.dart';
 import 'package:chatapp/features/home/presentation/bloc/home_state.dart';
 import 'package:chatapp/features/home/presentation/widget/user_list_item.dart';
+import 'package:chatapp/features/profile/presentation/screens/profile_screen.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +30,20 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Chat App'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () async {
+              // Navigate to profile screen
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+              // Refresh user list when returning to ensure latest profile changes are shown
+              if (mounted) {
+                context.read<HomeBloc>().add(RefreshUsersEvent());
+              }
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => FirebaseAuth.instance.signOut(),
@@ -83,8 +99,9 @@ class _HomeScreenState extends State<HomeScreen> {
               return const Center(child: Text('No users found'));
             }
             return RefreshIndicator(
-              onRefresh: () async =>
-                  context.read<HomeBloc>().add(RefreshUsersEvent()),
+              onRefresh: () async {
+                context.read<HomeBloc>().add(RefreshUsersEvent());
+              },
               child: ListView.separated(
                 itemCount: users.length,
                 separatorBuilder: (context, index) => const Divider(),

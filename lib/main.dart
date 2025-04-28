@@ -4,6 +4,7 @@ import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_event.dart';
 import 'package:chatapp/features/home/presentation/bloc/home_bloc.dart';
 import 'package:chatapp/features/home/presentation/screens/home_screen.dart';
 import 'package:chatapp/core/services/notification_service.dart';
+import 'package:chatapp/features/profile/presentation/bloc/profile_bloc.dart';
 
 import 'package:chatapp/features/splash.dart';
 import 'package:chatapp/firebase_options.dart';
@@ -68,6 +69,9 @@ class _MyAppState extends State<MyApp> {
         ),
         BlocProvider(
           create: (context) => sl<HomeBloc>(),
+        ),
+        BlocProvider(
+          create: (context) => ProfileBloc(),
         ),
       ],
       child: MaterialApp(

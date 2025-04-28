@@ -34,9 +34,6 @@ class NotificationService {
   // Service for Google authentication
   final GoogleAuthService _authService;
 
-  // Server key for legacy notifications
-  String? _serverKey;
-
   // For navigation
   final GlobalKey<NavigatorState>? navigatorKey;
 

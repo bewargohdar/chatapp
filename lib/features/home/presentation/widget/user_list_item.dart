@@ -16,7 +16,8 @@ class UserListItem extends StatelessWidget {
     return ListTile(
       onTap: onTap,
       leading: CircleAvatar(
-        backgroundImage: user.image != null ? NetworkImage(user.image!) : null,
+        backgroundImage:
+            user.image != null ? _getImageProvider(user.image!) : null,
         backgroundColor: Theme.of(context).colorScheme.primary,
         child: user.image == null
             ? Text(
@@ -32,5 +33,27 @@ class UserListItem extends StatelessWidget {
       title: Text(user.username ?? user.email),
       subtitle: user.username != null ? Text(user.email) : null,
     );
+  }
+
+  // Helper method to safely create an image provider - same as in MessageBubble
+  ImageProvider _getImageProvider(String imageUrl) {
+    if (imageUrl.isEmpty) {
+      return const AssetImage('assets/images/chat.png');
+    }
+
+    try {
+      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        return NetworkImage(imageUrl);
+      } else if (imageUrl.startsWith('assets/')) {
+        return AssetImage(imageUrl);
+      } else {
+        // If URL is not empty but doesn't have a protocol, add https://
+        return NetworkImage('https://$imageUrl');
+      }
+    } catch (e) {
+      print('Error creating image provider: $e');
+      // Fallback to default image
+      return const AssetImage('assets/images/chat.png');
+    }
   }
 }
