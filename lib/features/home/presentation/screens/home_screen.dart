@@ -1,4 +1,3 @@
-import 'package:chatapp/core/services/notification_settings_screen.dart';
 import 'package:chatapp/features/auth/domain/entity/user.dart';
 import 'package:chatapp/features/chat/presentation/screens/chat.dart';
 import 'package:chatapp/features/home/presentation/bloc/home_bloc.dart';
