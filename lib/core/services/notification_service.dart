@@ -5,12 +5,9 @@ import 'package:chatapp/server_injection.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:googleapis_auth/auth_io.dart';
-import 'package:googleapis_auth/googleapis_auth.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/services.dart';
 import 'package:chatapp/core/services/google_auth_service.dart';
 import 'package:chatapp/firebase_options.dart';
 import 'package:flutter/material.dart';
@@ -93,11 +90,11 @@ class NotificationService {
 
   Future<void> _initializeLocalNotifications() async {
     // Set up Android notification channels
-    final AndroidInitializationSettings androidSettings =
+    AndroidInitializationSettings androidSettings =
         const AndroidInitializationSettings('@mipmap/ic_launcher');
 
     if (Platform.isAndroid) {
-      final List<AndroidNotificationChannel> channels = [
+      List<AndroidNotificationChannel> channels = const [
         AndroidNotificationChannel(
           _mainChannelId,
           _mainChannelName,

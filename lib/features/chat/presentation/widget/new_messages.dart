@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:get_it/get_it.dart';
+import 'dart:async';
 
 class NewMessages extends StatefulWidget {
   final UserEntity? selectedUser;
@@ -31,6 +32,10 @@ class _NewMessagesState extends State<NewMessages>
   late AnimationController _animationController;
   late Animation<double> _pulseAnimation;
 
+  // Debounce timer for typing indicator
+  Timer? _typingTimer;
+  bool _isTyping = false;
+
   @override
   void initState() {
     super.initState();
@@ -42,13 +47,58 @@ class _NewMessagesState extends State<NewMessages>
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
+
+    // Listen to text changes to detect typing
+    _messageController.addListener(_onTextChanged);
   }
 
   @override
   void dispose() {
+    _messageController.removeListener(_onTextChanged);
     _messageController.dispose();
     _animationController.dispose();
+    _typingTimer?.cancel();
+
+    // Make sure to clear typing status on dispose
+    if (_isTyping) {
+      context
+          .read<ChatBloc>()
+          .add(StopTypingEvent(recipient: widget.selectedUser));
+    }
+
     super.dispose();
+  }
+
+  void _onTextChanged() {
+    if (_messageController.text.isNotEmpty && !_isTyping) {
+      // User started typing
+      setState(() => _isTyping = true);
+      context
+          .read<ChatBloc>()
+          .add(StartTypingEvent(recipient: widget.selectedUser));
+    }
+
+    // Reset the timer on each change
+    _typingTimer?.cancel();
+
+    // If text is empty, stop typing immediately
+    if (_messageController.text.isEmpty && _isTyping) {
+      setState(() => _isTyping = false);
+      context
+          .read<ChatBloc>()
+          .add(StopTypingEvent(recipient: widget.selectedUser));
+      return;
+    }
+
+    // Set a timer for typing pause (3 seconds of inactivity)
+    _typingTimer = Timer(const Duration(seconds: 3), () {
+      if (_isTyping) {
+        setState(() => _isTyping = false);
+        context
+            .read<ChatBloc>()
+            .add(StopTypingEvent(recipient: widget.selectedUser));
+      }
+    });
   }
 
   // Voice control methods

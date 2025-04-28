@@ -12,11 +12,12 @@ class ChatLoadingState extends ChatState {}
 
 class ChatMessagesFetchedState extends ChatState {
   final List<MessageEntity> messages;
+  final bool isTyping;
 
-  ChatMessagesFetchedState(this.messages);
+  ChatMessagesFetchedState(this.messages, {this.isTyping = false});
 
   @override
-  List<Object> get props => [messages];
+  List<Object> get props => [messages, isTyping];
 }
 
 class ChatMessageSentState extends ChatState {}
@@ -39,3 +40,13 @@ class VoiceRecordingCanceledState extends ChatState {}
 class VoiceSendingState extends ChatState {}
 
 class VoiceSentState extends ChatState {}
+
+class UserTypingState extends ChatState {
+  final bool isTyping;
+  final String? userId;
+
+  UserTypingState({required this.isTyping, this.userId});
+
+  @override
+  List<Object> get props => [isTyping, if (userId != null) userId!];
+}

@@ -85,4 +85,49 @@ class UserMessageService {
       messageType: MessageType.voice,
     );
   }
+
+  // Set user typing status
+  Future<void> setTypingStatus(String? recipientId, bool isTyping) async {
+    final user = _auth.currentUser;
+    if (user == null || recipientId == null) {
+      return;
+    }
+
+    // Create a unique chat ID to track typing (smaller ID first for consistency)
+    final chatId = user.uid.compareTo(recipientId) < 0
+        ? '${user.uid}_$recipientId'
+        : '${recipientId}_${user.uid}';
+
+    try {
+      await _firestore.collection('typing_status').doc(chatId).set({
+        user.uid: isTyping,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      print('Error updating typing status: $e');
+    }
+  }
+
+  // Listen to typing status
+  Stream<bool> getTypingStatus(String? userId) {
+    final user = _auth.currentUser;
+    if (user == null || userId == null) {
+      return Stream.value(false);
+    }
+
+    // Create a unique chat ID to track typing (smaller ID first for consistency)
+    final chatId = user.uid.compareTo(userId) < 0
+        ? '${user.uid}_$userId'
+        : '${userId}_${user.uid}';
+
+    return _firestore
+        .collection('typing_status')
+        .doc(chatId)
+        .snapshots()
+        .map((snapshot) {
+      if (!snapshot.exists) return false;
+      final data = snapshot.data();
+      return data?[userId] == true;
+    });
+  }
 }

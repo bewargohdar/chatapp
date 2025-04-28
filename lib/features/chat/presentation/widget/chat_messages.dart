@@ -8,6 +8,7 @@ import 'package:chatapp/features/chat/domain/entity/message.dart';
 import 'package:chatapp/features/auth/domain/entity/user.dart';
 
 import 'package:chatapp/features/chat/presentation/widget/message_bubble.dart';
+import 'package:chatapp/features/chat/presentation/widget/typing_indicator.dart';
 
 class ChatMessages extends StatefulWidget {
   final UserEntity? selectedUser;
@@ -23,6 +24,7 @@ class ChatMessages extends StatefulWidget {
 
 class _ChatMessagesState extends State<ChatMessages> {
   List<MessageEntity> _messages = [];
+  bool _isPartnerTyping = false;
 
   @override
   void initState() {
@@ -42,6 +44,7 @@ class _ChatMessagesState extends State<ChatMessages> {
         if (state is ChatMessagesFetchedState) {
           setState(() {
             _messages = state.messages;
+            _isPartnerTyping = state.isTyping;
           });
         }
       },
@@ -60,24 +63,39 @@ class _ChatMessagesState extends State<ChatMessages> {
         }
 
         // Use cached messages if available, otherwise show empty state
-        if (_messages.isNotEmpty) {
-          return ListView.builder(
-            reverse: true,
-            padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
-            itemCount: _messages.length,
-            itemBuilder: (context, index) {
-              final message = _messages[index];
-              final isMe =
-                  message.userId == FirebaseAuth.instance.currentUser?.uid;
-              return MessageBubble.first(
-                userImage: message.imageUrl,
-                username: message.username,
-                message: message.text,
-                isMe: isMe,
-                voiceUrl: message.voiceUrl,
-                messageType: message.messageType,
-              );
-            },
+        if (_messages.isNotEmpty || _isPartnerTyping) {
+          return Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  reverse: true,
+                  padding: EdgeInsets.only(
+                      top: 15,
+                      left: 15,
+                      right: 15,
+                      bottom: _isPartnerTyping ? 0 : 15),
+                  itemCount: _messages.length,
+                  itemBuilder: (context, index) {
+                    final message = _messages[index];
+                    final isMe = message.userId ==
+                        FirebaseAuth.instance.currentUser?.uid;
+                    return MessageBubble.first(
+                      userImage: message.imageUrl,
+                      username: message.username,
+                      message: message.text,
+                      isMe: isMe,
+                      voiceUrl: message.voiceUrl,
+                      messageType: message.messageType,
+                    );
+                  },
+                ),
+              ),
+              if (_isPartnerTyping)
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: TypingIndicator(),
+                ),
+            ],
           );
         }
 

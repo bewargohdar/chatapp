@@ -22,7 +22,7 @@ class _NotificationSettingsScreenState
   bool _isChatNotificationsEnabled = true;
   bool _isChecking = false;
   final TextEditingController _targetTokenController = TextEditingController();
-  bool _isSendingNotification = false;
+
   bool _showGoogleAuthHelp = false;
 
   @override

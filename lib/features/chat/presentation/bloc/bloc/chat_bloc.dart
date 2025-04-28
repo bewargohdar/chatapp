@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:bloc/bloc.dart';
 
 import '../../../../../core/res/data_state.dart';
 import '../../../../../core/services/voice_service.dart';
 import '../../../../../core/services/user_message_service.dart';
 import '../../../../auth/domain/entity/user.dart';
+import '../../../domain/entity/message.dart';
 import '../../../domain/usecase/get_message.dart';
 import '../../../domain/usecase/send_message.dart';
 import 'chat_event.dart';
@@ -14,6 +16,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final SendMessageUseCase sendMessageUseCase;
   final VoiceService _voiceService;
   final UserMessageService _userMessageService;
+
+  // Subscription for typing status
+  StreamSubscription? _typingSubscription;
+  UserEntity? _currentChatPartner;
+  List<MessageEntity> _cachedMessages = [];
+  bool _isPartnerTyping = false;
 
   ChatBloc(
     this.getMessagesUsecase,
@@ -27,18 +35,45 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<StopRecordingVoiceEvent>(_onStopRecordingVoice);
     on<CancelRecordingVoiceEvent>(_onCancelRecordingVoice);
     on<SendVoiceMessageEvent>(_onSendVoiceMessage);
+    on<StartTypingEvent>(_onStartTyping);
+    on<StopTypingEvent>(_onStopTyping);
   }
 
   Future<void> _onFetchMessages(
       FetchMessagesEvent event, Emitter<ChatState> emit) async {
     emit(ChatLoadingState());
+
+    // If we're switching chat partners, cancel the previous subscription
+    if (_currentChatPartner?.id != event.selectedUser?.id) {
+      await _typingSubscription?.cancel();
+      _typingSubscription = null;
+      _startListeningToTypingStatus(event.selectedUser);
+    }
+
+    _currentChatPartner = event.selectedUser;
+
     await for (final dataState in getMessagesUsecase(event.selectedUser?.id)) {
       if (dataState is DataSuccess) {
-        emit(ChatMessagesFetchedState(dataState.data ?? []));
+        _cachedMessages = dataState.data ?? [];
+        emit(ChatMessagesFetchedState(_cachedMessages,
+            isTyping: _isPartnerTyping));
       } else if (dataState is DataError) {
         emit(ChatErrorState(dataState.error?.toString() ?? 'Unknown error'));
       }
     }
+  }
+
+  void _startListeningToTypingStatus(UserEntity? chatPartner) {
+    if (chatPartner?.id == null) return;
+
+    _typingSubscription =
+        _userMessageService.getTypingStatus(chatPartner!.id).listen((isTyping) {
+      _isPartnerTyping = isTyping;
+      // Only emit if we have an active chat with cached messages
+      if (_cachedMessages.isNotEmpty) {
+        emit(ChatMessagesFetchedState(_cachedMessages, isTyping: isTyping));
+      }
+    });
   }
 
   Future<void> _onSendMessage(
@@ -49,6 +84,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       emit(
           ChatErrorState(dataState.error?.toString() ?? 'Send message failed'));
     } else if (dataState is DataSuccess) {
+      // Clear typing status when sending a message
+      if (event.message.recipientId != null) {
+        await _userMessageService.setTypingStatus(
+            event.message.recipientId, false);
+      }
+
       // Refresh the messages list after sending a text message
       final recipientId = event.message.recipientId;
       if (recipientId != null) {
@@ -126,8 +167,28 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }
   }
 
+  // Handle typing status
+  Future<void> _onStartTyping(
+      StartTypingEvent event, Emitter<ChatState> emit) async {
+    try {
+      await _userMessageService.setTypingStatus(event.recipient?.id, true);
+    } catch (e) {
+      print('Error setting typing status: $e');
+    }
+  }
+
+  Future<void> _onStopTyping(
+      StopTypingEvent event, Emitter<ChatState> emit) async {
+    try {
+      await _userMessageService.setTypingStatus(event.recipient?.id, false);
+    } catch (e) {
+      print('Error clearing typing status: $e');
+    }
+  }
+
   @override
   Future<void> close() {
+    _typingSubscription?.cancel();
     _voiceService.dispose();
     return super.close();
   }

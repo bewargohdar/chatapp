@@ -50,3 +50,22 @@ class SendVoiceMessageEvent extends ChatEvent {
   @override
   List<Object> get props => [filePath];
 }
+
+// Add typing status events
+class StartTypingEvent extends ChatEvent {
+  final UserEntity? recipient;
+
+  StartTypingEvent({this.recipient});
+
+  @override
+  List<Object> get props => recipient != null ? [recipient!] : [];
+}
+
+class StopTypingEvent extends ChatEvent {
+  final UserEntity? recipient;
+
+  StopTypingEvent({this.recipient});
+
+  @override
+  List<Object> get props => recipient != null ? [recipient!] : [];
+}

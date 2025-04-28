@@ -4,7 +4,6 @@ import 'package:chatapp/features/chat/presentation/screens/chat.dart';
 import 'package:chatapp/features/home/presentation/bloc/home_bloc.dart';
 import 'package:chatapp/features/home/presentation/bloc/home_event.dart';
 import 'package:chatapp/features/home/presentation/bloc/home_state.dart';
-import 'package:chatapp/features/home/presentation/screens/notification_test_screen.dart';
 import 'package:chatapp/features/home/presentation/widget/user_list_item.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -30,15 +29,6 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Chat App'),
         actions: [
-          // IconButton(
-          //   icon: const Icon(Icons.notifications),
-          //   onPressed: () => _navigateToNotificationTest(context),
-          //   tooltip: 'Test Notifications',
-          // ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => _navigateToNotificationSettings(context),
-          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => FirebaseAuth.instance.signOut(),
@@ -115,24 +105,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  void _navigateToNotificationSettings(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const NotificationSettingsScreen(),
-      ),
-    );
-  }
-
-  // void _navigateToNotificationTest(BuildContext context) {
-  //   Navigator.push(
-  //     context,
-  //     MaterialPageRoute(
-  //       builder: (context) => const NotificationTestScreen(),
-  //     ),
-  //   );
-  // }
 
   void _navigateToChat(BuildContext context, UserEntity user) {
     Navigator.push(
