@@ -1,3 +1,4 @@
+import 'package:chatapp/core/services/push_notification_tester.dart';
 import 'package:chatapp/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_bloc.dart';
 import 'package:chatapp/features/chat/presentation/bloc/bloc/chat_event.dart';
@@ -14,7 +15,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
-import 'core/services/push_notification_tester.dart';
+
+// Global navigator key for access from anywhere
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,23 +28,12 @@ void main() async {
   // Initialize dependency injection
   init();
 
-  // Check if service account is configured
-  final hasServiceAccount =
-      await PushNotificationTester.isServiceAccountConfigured();
-  if (!hasServiceAccount && kDebugMode) {
-    print(
-        'WARNING: Service account file missing. FCM notifications will not work!');
-    print('Please add service-account.json to assets/credentials/');
-  }
+  // Provide navigatorKey to NotificationService
+  sl.registerSingleton<GlobalKey<NavigatorState>>(navigatorKey);
 
   // Initialize notification service
   try {
     await sl<NotificationService>().initialize();
-
-    // Print the FCM token in debug mode
-    if (kDebugMode) {
-      await PushNotificationTester.printToken();
-    }
   } catch (e) {
     if (kDebugMode) {
       print('Error initializing notification service: $e');
@@ -52,10 +44,19 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -71,6 +72,7 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
+        navigatorKey: navigatorKey, // Use the global navigator key
         debugShowCheckedModeBanner: false,
         title: 'FlutterChat',
         theme: ThemeData().copyWith(

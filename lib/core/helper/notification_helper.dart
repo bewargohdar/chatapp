@@ -52,7 +52,8 @@ class NotificationHelper {
     BuildContext? context,
   }) async {
     try {
-      final result = await _notificationService.sendNotificationWithServerKey(
+      // Use the primary sendNotification method which tries JWT first, then falls back to server key
+      final result = await _notificationService.sendNotification(
         recipientToken: token,
         title: title,
         body: body,

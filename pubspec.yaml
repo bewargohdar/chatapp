@@ -80,7 +80,7 @@ flutter:
   assets:
     - assets/images/chat.png
     - assets/credentials/service-account.json
-    - assets/credentials/server-key.txt
+    
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
